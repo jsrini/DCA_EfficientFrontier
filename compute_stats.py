@@ -23,14 +23,18 @@ for win, regime, path in FILES:
     w("|---|--:|--:|--:|--:|--:|--:|--:|")
     for nm in names:
         R = data[nm]; cal = calmar(R)
-        w(f"| {nm} | ${np.median(R[:,0])/1e6:.2f}M | {np.median(R[:,1])*100:.1f}% | "
-          f"{np.median(R[:,3]):.3f} | {np.percentile(R[:,3],10):.3f} | {np.median(R[:,2])*100:.1f}% | "
-          f"{np.percentile(R[:,2],10)*100:.1f}% | {np.nanmedian(cal):.3f} |")
+        w(f"| {nm} | ${np.nanmedian(R[:,0])/1e6:.2f}M | {np.nanmedian(R[:,1])*100:.1f}% | "
+          f"{np.nanmedian(R[:,3]):.3f} | {np.nanpercentile(R[:,3],10):.3f} | {np.nanmedian(R[:,2])*100:.1f}% | "
+          f"{np.nanpercentile(R[:,2],10)*100:.1f}% | {np.nanmedian(cal):.3f} |")
 
-# paired bootstrap, 1980 taxable, every soft strategy vs three references
+# paired bootstrap, 1980 taxable, every soft strategy vs three references.
+# SIG is Benjamini-Hochberg-controlled across the WHOLE family below (every soft strategy x 3
+# references x 3 metrics) at a 5% false-discovery rate, so the flags account for the ~100 multiple
+# comparisons rather than tagging each 95% CI in isolation (which would expect ~5 false positives).
 d = np.load(os.path.join(_R, "core_1980_taxable.npy"), allow_pickle=True).item(); data = d["data"]; names = d["names"]
 soft = [n for n in names if n.endswith("soft")]
-rng = np.random.default_rng(7); B = 5000
+REFS = ["30/30/40 soft", "PermPort soft", "50/25/25 soft"]; METRICS = ["final", "sharpe", "calmar"]
+rng = np.random.default_rng(7); B = 5000; FDR = 0.05
 def series(nm, kind):
     R = data[nm]
     return {"final": R[:,0], "sharpe": R[:,3], "calmar": calmar(R)}[kind]
@@ -38,21 +42,34 @@ def test(a, b, kind):
     da = series(a, kind) - series(b, kind); n = len(da)
     bidx = rng.integers(0, n, size=(B, n)); bs = np.nanmean(da[bidx], 1)
     lo, hi = np.nanpercentile(bs, [2.5, 97.5]); win = np.nanmean(series(a,kind) > series(b,kind))*100
-    return np.nanmean(da), lo, hi, win, ("SIG" if (lo>0 or hi<0) else "n.s.")
+    p = min(1.0, 2.0 * min(np.nanmean(bs <= 0), np.nanmean(bs >= 0)))   # two-sided percentile-bootstrap p
+    return np.nanmean(da), lo, hi, win, p
 
-for ref in ["30/30/40 soft", "PermPort soft", "50/25/25 soft"]:
-    w(f"\n### 1980 taxable — paired bootstrap: every soft strategy MINUS {ref} (95% CI of mean diff, 5000 resamples)")
+# pass 1: run every test in the family and collect p-values (rng order unchanged: ref, strategy, metric)
+res = {}
+for ref in REFS:
+    for nm in soft:
+        if nm == ref: continue
+        for kind in METRICS:
+            res[(ref, nm, kind)] = test(nm, ref, kind)
+pv = sorted(r[4] for r in res.values()); M = len(pv)
+pcrit = max((p for k, p in enumerate(pv, 1) if p <= k / M * FDR), default=-1.0)   # BH critical p
+def sigtag(p): return "SIG" if p <= pcrit else "n.s."
+
+# pass 2: render each reference's table, tagging significance from the family-wide BH threshold
+for ref in REFS:
+    w(f"\n### 1980 taxable — paired bootstrap: every soft strategy MINUS {ref} (mean diff, 5000 resamples; SIG = BH-corrected at FDR {FDR:.0%} over the {M}-test family)")
     w("| Strategy − ref | Final mean ($k) | Final 95%CI | F>% | Sharpe mean | Sharpe 95%CI | S>% | Calmar mean | Calmar 95%CI | C>% |")
     w("|---|--:|--|--:|--:|--|--:|--:|--|--:|")
     for nm in soft:
         if nm == ref: continue
-        fm,flo,fhi,fw,fs = test(nm, ref, "final")
-        sm,slo,shi,sw,ss = test(nm, ref, "sharpe")
-        cm,clo,chi,cw,cs = test(nm, ref, "calmar")
+        fm,flo,fhi,fw,fp = res[(ref, nm, "final")]
+        sm,slo,shi,sw,sp = res[(ref, nm, "sharpe")]
+        cm,clo,chi,cw,cp = res[(ref, nm, "calmar")]
         w(f"| {nm.replace(' soft','')} − {ref.replace(' soft','')} | "
-          f"{fm/1e3:+.0f} {fs} | [{flo/1e3:+.0f},{fhi/1e3:+.0f}] | {fw:.0f}% | "
-          f"{sm:+.4f} {ss} | [{slo:+.4f},{shi:+.4f}] | {sw:.0f}% | "
-          f"{cm:+.4f} {cs} | [{clo:+.4f},{chi:+.4f}] | {cw:.0f}% |")
+          f"{fm/1e3:+.0f} {sigtag(fp)} | [{flo/1e3:+.0f},{fhi/1e3:+.0f}] | {fw:.0f}% | "
+          f"{sm:+.4f} {sigtag(sp)} | [{slo:+.4f},{shi:+.4f}] | {sw:.0f}% | "
+          f"{cm:+.4f} {sigtag(cp)} | [{clo:+.4f},{chi:+.4f}] | {cw:.0f}% |")
 
 with open(OUT, "w") as _fh:                    # overwrite: the record reflects the current run only
     _fh.write("\n".join(L))

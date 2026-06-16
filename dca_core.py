@@ -6,8 +6,8 @@ schedule. Strategies are defined ONCE in asset roles (STOCK/GOLD/BOND/...), so a
 whose roles a window supports runs in that window automatically -- the stocks/gold/bonds
 mixes run in both the 1995-2026 and 1980-2026 windows from the same code.
 
-Replaces the duplicated per-window scripts (dca_tax_mc.py, dca_tax_46yr.py, dca_tax_80field.py).
-Verified to reproduce their published numbers exactly (see dca_core_verify.py).
+Consolidates the tax accrual, bootstrap, metrics, and strategy runners that previously lived in
+separate per-window scripts into one window-parameterized engine.
 
 Usage:  python3 dca_core.py 1995     |     python3 dca_core.py 1980
 """
@@ -194,12 +194,17 @@ class Engine:
         return np.array([fv, irr, mdd, sharpe, dur, recov, ptt, resid, tmdd])
 
     def _pay_income(self, sh, P_t, incyr, py, paid):
+        """Sell shares pro-rata per leg to pay last year's income tax. Returns the updated share
+        vector and the per-leg fraction of shares sold, so callers that track cost basis can shrink
+        it by the same fraction (the sold shares retire their basis too)."""
+        frac = np.zeros(self.A)
         if py in incyr and py not in paid:
             due = self.RATE * incyr[py]
-            sell = np.minimum(sh, due / ((1.0 - self.tc) * np.where(P_t > 0, P_t, 1))); sh = sh - sell; paid.add(py)
-        return sh
+            sell = np.minimum(sh, due / ((1.0 - self.tc) * np.where(P_t > 0, P_t, 1)))
+            frac = np.where(sh > 0, sell / np.where(sh > 0, sh, 1.0), 0.0); sh = sh - sell; paid.add(py)
+        return sh, frac
 
-    # -- runners (ported verbatim from dca_tax_mc.py) ------------------------
+    # -- strategy runners ----------------------------------------------------
     def run_static(self, P, Y, w, soft):
         A, T, cd, cdset, mon, yr, cpos, camt = self.A, self.T, self.cd, self.cdset, self.mon, self.yr, self.cpos, self.camt
         act = w > 0; sh = np.zeros(A); val = np.zeros(T); incyr = {}; paid = set()
@@ -207,7 +212,7 @@ class Engine:
         for t in range(T):
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
-            if t in cdset and mon[t] == 1: sh = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+            if t in cdset and mon[t] == 1: sh, _ = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
             if t in cdset:
                 a = camt[cpos[t]]; pv = sh * P[t]
                 if soft:
@@ -236,7 +241,7 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
                 py = yr[t] - 1
                 if py in cgyr and py not in paidcg:
                     due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
@@ -275,7 +280,7 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
                 py = yr[t] - 1
                 if reset == "hard" and py in cgyr and py not in paidcg:
                     due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
@@ -318,7 +323,7 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
                 py = yr[t] - 1
                 if reset == "hard" and py in cgyr and py not in paidcg:
                     due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
@@ -366,7 +371,7 @@ class Engine:
                         s = min(sh, due / ((1.0 - self.tc) * P[t][held])); sh -= s
                         if lots:
                             tot = sum(l[1] for l in lots); fr = min(1.0, s / tot) if tot > 0 else 0
-                            for l in lots: l[1] -= l[1] * fr
+                            for l in lots: l[1] -= l[1] * fr; l[2] -= l[2] * fr
                     paid.add(py)
                 if py in cgyr and py not in paidcg:
                     due = self.CG * cgyr[py]; cur = sh * P[t][held] if held is not None else 0.0
@@ -374,7 +379,7 @@ class Engine:
                         s = min(sh, due / ((1.0 - self.tc) * P[t][held])); sh -= s
                         if lots:
                             tot = sum(l[1] for l in lots); fr = min(1.0, s / tot) if tot > 0 else 0
-                            for l in lots: l[1] -= l[1] * fr
+                            for l in lots: l[1] -= l[1] * fr; l[2] -= l[2] * fr
                     paidcg.add(py)
             if mon[t] in rebal or held is None:
                 if t in cdset or held is None:
@@ -418,7 +423,7 @@ class Engine:
         for t in range(T):
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
-            if t in cdset and mon[t] == 1: sh = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+            if t in cdset and mon[t] == 1: sh, _ = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
             if t in cdset:
                 a = camt[cpos[t]]; soft = a
                 r = np.array([P[t][i] / P[prev12[t]][i] - 1 for i in sgb])   # trailing 12m total return
