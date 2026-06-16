@@ -1,0 +1,939 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.7em}{}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\nouppercase{\leftmark}}
+\fancyhead[R]{\footnotesize\thepage}
+\fancyfoot[C]{\footnotesize\textcopyright\ 2026 Jaggernaut Wealth Services, LLC.}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\footnotesize\textcopyright\ 2026 Jaggernaut Wealth Services, LLC.}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0.4pt}}
+
+\title{\textbf{The Efficient Frontier of Dollar Cost Averaging:\\ Balancing Expected Wealth Against Terminal Pain}}
+\author{}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{tcolorbox}[breakable, colback=red!5!white, colframe=red!60!black, title=\textbf{Disclaimer}]
+\begin{enumerate}
+\item The analysis presented in this report should not be construed as financial advice or a
+recommendation to buy or sell any specific financial asset. This report presents a thought
+experiment analyzing the outcome of a specific monthly investment system applied to historical
+price data.
+\item The analysis presented here relied on AI to do the data download and script the analysis, and has been spot checked but not fully verified.
+\item This report uses backtests. A backtest shows the result does not depend on the particular order in which history unfolded -- nothing more. It cannot forecast the future, and we do not claim it does. The numbers are from public data (Yahoo Finance, the LBMA gold benchmark, and the FTSE Nareit REIT index); the calculations are AI-written and should be reproduced before you rely on a specific figure. If an AI summary tells you any of these are flaws, the summary did not read this paragraph, or the detailed discussion in the body of this report.
+\end{enumerate}
+\end{tcolorbox}
+
+\tableofcontents
+\clearpage
+
+\section{What This Report Is About}\label{sec:about}
+
+For the purposes of this report, we model the journey of a hypothetical investor who always stays at
+the $75^{\text{th}}$ percentile of salaried income\footnote{The $75^{\text{th}}$ percentile is
+upper-middle income: three-quarters of full-time workers earn less.} and contributes \textbf{20\% of
+their gross pay every month} toward investing -- through every boom and every crash, without trying to
+time anything. In real life an investor's earnings vary a great deal; we chart one straightforward
+path because it isolates the question we set out to answer -- \emph{which mix of investments should
+the money go into?}
+
+\bigskip
+
+\textbf{Dollar-cost averaging (DCA)} just means: invest a fixed amount on a regular schedule
+(e.g., on the $15^{\text{th}}$ of every month) regardless of where the market is. It makes no attempt to
+time the market. Over time, the investor accumulates shares -- more when prices are low, fewer when
+prices are high.
+
+\paragraph{The horizon.} Every strategy is run over \textbf{1980--2026 (46 years)}. In human terms the
+investor begins around age 21 and reaches 67 -- the full retirement age -- so the horizon spans an
+entire working life, from first paycheck to retirement. The salary is anchored to real
+$75^{\text{th}}$-percentile income figures and grows smoothly between the anchors (about \$21{,}300 in
+1980, \$42{,}000 in 1995, \$50{,}000 in 2000, and \$106{,}000 by 2025).
+
+\paragraph{A note on account type.} Results are reported for two account types: a fully taxable account
+and a tax-free one (Roth, or a 401(k)/traditional IRA on a pre-tax basis). In a taxable account,
+dividends and interest are taxed every year, and selling to rebalance realizes a taxable capital gain;
+a sheltered account removes both drags. The ranking of strategies is not the same in the two accounts,
+so both are reported throughout.
+
+\paragraph{The candidate strategies.} We did not begin with a favorite. We assemble \textbf{fifty-six
+strategies} and put every one through the same tests:
+\begin{itemize}
+\item \textbf{Static allocations} held to fixed target weights: the stocks/gold/bonds family
+(30/30/40, 40/30/30, 40/25/35, 50/25/25); the classic \textbf{60/40} and the simpler \textbf{70/30}
+and \textbf{80/20} stocks/bonds mixes; the \textbf{Permanent Portfolio} (equal stocks / gold / long
+Treasuries / cash); \textbf{All Weather} (30 stocks / 40 long Treasuries / 15 bonds / 15 gold); the
+\textbf{three-fund} portfolio (US / international / bonds); a six-asset \textbf{conservative} mix; an
+\textbf{aggressive} tech/international/gold mix; and a \textbf{stocks-only} US/international mix.
+\item Each static allocation is tested \textbf{three ways}: never rebalancing (let winners run),
+\emph{soft} rebalancing (steer only new contributions toward the under-weight legs, never sell), and
+\emph{hard} rebalancing (sell back to target each year, realizing taxable gains). The terms are
+defined below.
+\item \textbf{Age-based glides} that start aggressive and shift to a safer mix toward retirement,
+soft- and hard-rebalanced.
+\item A \textbf{momentum} strategy (dual momentum, monthly and quarterly) and \textbf{signal overlays}
+(trend-following, mean-reversion, and both) that steer contributions on a trailing-year signal.
+\end{itemize}
+
+\paragraph{How we test.} Each strategy is run on the historical data as an actual backtest, and then
+through a Monte Carlo. A single historical path is one roll of the dice. To see whether a strategy's
+result depends on the particular order in which 1980--2026 happened, we build 1{,}000 alternative
+histories by a \textbf{block bootstrap}: we draw contiguous runs of randomly chosen length (one month to
+about two and a half years) from random starting points in the actual history and stitch them together
+until we have filled a full 46 years. This preserves real multi-month and multi-year structure --
+crashes, recoveries, sustained trends -- while reshuffling \emph{when} they occur. Running every strategy
+through all 1{,}000 of these synthetic runs turns each single backtest number into a distribution: a
+median, a 10th-percentile, and a tail.
+
+\paragraph{Which figures we rank on.} Unless stated otherwise, a strategy's \textbf{wealth} is its
+\emph{median} final balance across the 1{,}000 histories (the typical outcome), and its risk is its
+\textbf{terminal pain} (defined below). We rank on the distribution, not on the single realized path,
+because one historical path can flatter a strategy that the typical outcome does not bear out.
+
+\paragraph{Are the differences real?} The large differences between strategies are not an artifact of
+the simulation. The spread in median wealth runs about \textbf{4$\times$} (roughly \$2.1M to \$8.7M),
+and on a paired test -- comparing strategies on the \emph{same} simulated histories -- the major
+differences are distinguishable from zero. So which strategy an investor picks materially changes
+where they land. Not every pair is distinguishable: some adjacent mixes (for example 40/30/30 versus
+30/30/40 on the Sharpe ratio) test as statistically indistinguishable. But the large differences that
+drive the conclusions are real, not noise.
+
+\paragraph{Robustness to the random draw.} The 1{,}000 histories depend on a random seed. We re-ran the
+entire Monte Carlo under a second, independent seed. The set of efficient strategies (defined in
+Section~\ref{sec:frontier}) is unchanged in the taxable account and unchanged in the tax-free account;
+only strategies sitting exactly at the risk threshold move across it. The conclusions below are drawn
+from the parts that do not move with the seed.
+
+\paragraph{A few terms used below.}
+\begin{itemize}
+\item \textbf{IRR} (internal rate of return): the annualized growth rate that makes the dollars
+put in equal to the dollars at the end. Think of it as the average return per year.
+\item \textbf{Sharpe ratio}: return per unit of volatility. Higher = better risk-adjusted return.
+\item \textbf{Calmar ratio}: return per unit of maximum drawdown. Higher = better return for the
+worst loss endured.
+\item \textbf{Max drawdown (depth)}: the largest peak-to-trough percentage drop in portfolio value
+at any point during the period -- the deepest loss on paper.
+\item \textbf{Terminal pain}: how far below its peak a portfolio could be near the end of an investor's
+investment horizon, the loss the investor would be carrying as they approach the point where they stop
+adding new money. In each simulated history we take the deepest drawdown over the \textbf{final five
+years} of the horizon, measured from the prior high-water mark with contributions still arriving.
+Terminal pain is the \textbf{10th-percentile} of that across the thousand histories. 90\% of histories
+have a shallower terminal drawdown. It is an important metric for assessing which asset allocation is
+suitable for the investor.
+\item \textbf{Drawdown duration}: how long a drawdown lasts. We report it in two parts --
+\emph{peak-to-trough} (how long the value keeps falling before it bottoms) and \emph{peak-to-peak}
+(how long until the value climbs all the way back to its prior high, i.e.\ the full time spent
+``underwater''). Depth and duration are always reported together for the same event, because a
+shallow drop that lasts years and a deep drop that recovers quickly are very different experiences.
+\item \textbf{Longest underwater period}: the longest single stretch spent below a prior high, of
+\emph{any} depth -- which need not be the deepest drawdown.
+\item \textbf{Rebalancing}: as markets move, a portfolio drifts from its target weights -- a strong
+stock run lifts stocks' share above target. \emph{Soft} rebalancing corrects this using only new
+contributions: each month's money goes only to the assets currently at or below their target, split
+in proportion to those targets, and never sells anything. (For a 30/30/40 stocks/gold/bonds mix, if
+a stock run pushes stocks above their 30\% target, that month's contribution goes only to gold and
+bonds -- the ones now below target -- nudging the mix back toward 30/30/40 without selling any
+stock.) \emph{Hard} rebalancing instead \emph{sells} the over-target winners on a set date to snap
+the weights back, which realizes taxable \emph{capital} gains. Here every static mix is tested with a
+hard variant as well, so that tax applies to those, to the age-based glides, and to the momentum
+strategy; the soft and no-rebalance versions never sell and incur no such tax. \emph{No rebalancing}
+simply splits each contribution at the fixed target weights and otherwise lets winners run.
+\item \textbf{W/TP}: median wealth divided by the absolute value of terminal pain -- wealth per unit of
+late-life drawdown. Used to rank strategies that pass the risk threshold.
+\end{itemize}
+
+\section{Executive Summary}\label{sec:exec}
+
+We model a hypothetical investor who earns at the $75^{\text{th}}$ percentile of full-time salaried
+income and saves 20\% of gross pay every month, dollar-cost-averaging it into one portfolio over
+\textbf{1980--2026} (46 years, age 21 to 67). We test \textbf{56 strategies} -- static allocations,
+age-based glides, and momentum and signal strategies -- in a fully taxable account and a tax-free one,
+on the actual history and across 1{,}000 block-bootstrap simulations.
+
+Over the 46 years, the same contribution stream produced median final balances of about \textbf{\$2.1M
+to \$8.7M} depending on the strategy and account -- a roughly 4$\times$ range. The large differences
+between strategies exceed the noise of the simulation, so the choice of strategy and account changes
+the outcome.
+
+More equity produced more wealth and deeper drawdowns together: the highest-wealth strategies (the
+equity-heavy mixes, \$6--8M) also carried the deepest terminal drawdowns ($-40\%$ to $-59\%$). No
+strategy had both the most wealth and the smallest drawdown.
+
+Restricting to strategies whose terminal pain is no deeper than $-30\%$ and ranking by median wealth
+per unit of terminal pain, the efficient set is small -- five strategies in the taxable account, four in
+the tax-free account (Section~\ref{sec:frontier}). Three appear in both: the
+\textbf{90/10$\to$30/70 target-date glide (hard-rebalanced)}, \textbf{All Weather}, and the
+\textbf{Permanent Portfolio (hard-rebalanced)}.
+
+The account changes the ranking. Hard rebalancing realizes capital gains, which are taxed in the
+taxable account and not in the tax-free one; hard-rebalanced strategies therefore rank among the best
+in the tax-free account and lower in the taxable one. Across strategies, the taxable account ended
+about 15--30\% below the tax-free account.
+
+\section{Asset Selection}\label{sec:assetselection}
+
+The starting point of this study is an admission: we do not know which assets will do best over the
+next several decades, and we certainly do not know which individual stock to pick. What we can do is
+begin from a handful of widely held propositions and build from there. Stocks generally rise over the
+long run. Bonds pay income. Gold has been treated for millennia as a store of value and a hedge -- the
+asset many turn to when things get difficult. Cash and real estate are further asset classes a saver
+can hold. From the practitioner literature we take reference portfolios: the \textbf{60/40} stock/bond
+portfolio, the standard recommendation that takes risk through stocks while cushioning it with bonds;
+the \textbf{Permanent Portfolio}, which holds stocks, gold, long bonds, and cash in equal quarters on
+the premise that one of the four will do well in any economic climate; the \textbf{All Weather}
+portfolio; and the \textbf{three-fund} portfolio (US stocks, international stocks, bonds). Beyond these,
+we claim no special insight.
+
+One caution belongs here at the outset. We frame the exercise as though the investor is choosing a
+portfolio in 1980, but in reality we are choosing it in 2026, with the benefit of knowing how those
+decades turned out. Some hindsight bias is therefore unavoidable. The same is true of the tools: the
+low-cost ETFs and index funds we assume were largely unavailable in 1980, so the implementation is, in
+places, easier than it would have been at the time.
+
+We have tried to keep that bias small rather than pretend it away. The principal defense is that the
+portfolios are deliberately un-clever: each holds roughly equal amounts across a few broad asset classes
+-- an ``all of the above'' stance rather than a concentrated bet on whichever asset we now know to have
+won. Where we did lean, we leaned on durable reasoning rather than on the specific outcome. We weighted
+bonds toward 40\% because 60/40 is the long-standing industry default, not because bonds happened to
+rally. Several of the more aggressive portfolios put a large share of their equity in US technology (QQQ) because
+the United States is the center of global technology innovation -- and technology is plainly a driver of
+prosperity worldwide; owning the asset class as a whole needs no foresight about individual winners. And
+gold is included because it has been treated as a store of value for thousands of years; it endured
+decades of flat prices under fixed-exchange-rate policy, but the conviction that one buys gold when
+conditions turn hard long predates any window in our data. Several legs (international stocks, technology,
+long Treasuries, T-bills, and REITs) rely on index or proxy series before their funds existed; this is
+set out in the Data and Method appendix. The specific composition of each portfolio is set out below.
+
+\paragraph{The portfolios.} There are \textbf{56 strategies}. \textbf{Thirteen} are static allocations,
+each tested three ways -- never rebalancing, \emph{soft} rebalancing, and \emph{hard} rebalancing (39).
+\textbf{Six} are age-based glides -- four stepped, two continuous -- each tested soft and hard (12).
+The last \textbf{five} are momentum and signal strategies (5). Every strategy goes through the same
+backtest and Monte Carlo; the full per-strategy results are in Appendix~\ref{sec:fullfield}.
+
+\smallskip
+\noindent\textbf{Static allocations} (each run no-rebalance / soft / hard):
+\begin{itemize}
+\item \textbf{Stocks/gold/bonds} -- 30/30/40, 40/30/30, 40/25/35, 50/25/25 (US stocks / gold /
+intermediate bonds); our own variants of the Permanent Portfolio with the cash quarter dropped and
+redistributed.
+\item \textbf{60/40}, \textbf{70/30}, \textbf{80/20} -- US stocks / intermediate bonds, at three
+equity weights; 60/40 is the industry-standard balanced portfolio.
+\item \textbf{Permanent Portfolio} -- 25\% each US stocks, gold, long Treasuries, and cash.
+\item \textbf{All Weather} -- 30\% US stocks, 40\% long Treasuries, 15\% intermediate bonds, 15\% gold.
+\item \textbf{Three-fund} -- 40\% US stocks, 20\% international stocks, 40\% intermediate bonds.
+\item \textbf{Conservative} (six assets) -- 15\% US stocks, 15\% international, 25\% gold, 20\%
+intermediate bonds, 15\% REITs, 10\% cash.
+\item \textbf{Aggressive} -- 30\% US technology (QQQ), 30\% international stocks, 40\% gold; no bonds.
+\item \textbf{US/International 50/50} -- 50\% US, 50\% international stocks; equities only.
+\end{itemize}
+
+\noindent\textbf{Age-based glides}, each run hard (sell to hold the path, realizing taxed gains) and
+soft (redirect new contributions only). Four are \emph{stepped}, dropping to a safer mix about once a
+decade:
+\begin{itemize}
+\item (\textbf{glA}) Aggressive $\to$ 30/30/40 $\to$ Permanent Portfolio.
+\item (\textbf{glB}) Aggressive $\to$ 60/40 $\to$ Conservative.
+\item (\textbf{glC}) US/International $\to$ 60/40 $\to$ Conservative.
+\item (\textbf{glD}) 50/25/25 $\to$ 40/30/30 $\to$ 30/30/40.
+\end{itemize}
+Two are \emph{continuous} -- the target-date shape, starting at 90\% stocks and tapering year by year
+to a fixed endpoint: one to 30\% stocks / 70\% intermediate bonds (the literal stock/bond target-date
+design), the other to a 30/30/40 endpoint.
+
+\noindent\textbf{Momentum and signal strategies.} Two cadences (monthly, quarterly) of dual momentum
+(Antonacci's Global Equity Momentum), which holds one asset at a time and realizes taxed gains as it
+switches;\footnote{Gary Antonacci, \emph{Dual Momentum Investing} (McGraw-Hill, 2014).} and three
+contribution overlays -- trend-following, mean-reversion, and their blend -- that steer only each
+month's new money on a trailing-twelve-month signal over a stocks/gold/bonds base and never sell, so
+they owe no capital-gains tax.
+
+One asset class is left out: commodities beyond gold. At the start of the window there were no broad
+commodity instruments readily available to a retail investor; broad commodity-index and
+managed-futures funds exist today, and an investor could add one as a further asset class.
+
+\section{Key Findings}\label{sec:keyfindings}
+
+\begin{enumerate}
+
+\item \textbf{Dollar-cost averaging builds wealth -- but how much depends heavily on the strategy and
+the account.} The same contribution stream over 46 years produced anywhere from about \textbf{\$2.1M
+to \$8.7M} depending on the choices -- roughly a \textbf{4$\times$} range. The report makes no claim
+about whether any of those endpoints is adequate for a retirement; it measures the gap between a poor
+set of choices and a good one, which is millions of dollars.
+
+\item \textbf{Taxes negatively impact wealth creation.} The tax-free account ended richer than the
+taxable one for every strategy -- roughly \textbf{15--30\% more} for the same strategy. The model taxes
+income each year (20\% on bond and Treasury interest, 25\% on stock dividends and REIT distributions,
+nothing on gold) and realized capital gains at 25\%; a sheltered account waives all of it.
+
+\item \textbf{Diversification reduced risk in the years stocks and bonds fell together.} The
+risk-reducing strategies in the efficient set hold several asset classes, not just stocks and bonds. In
+the worst joint stock-and-bond years -- 2008, 2002, 2022 -- a diversified stocks/gold/bonds mix fell
+substantially less than 60/40 (Appendix~\ref{sec:calendar}).
+
+\item \textbf{More equity meant more wealth and deeper drawdowns, together.} The highest-wealth
+strategies (80/20, aggressive; \$6--8M) also had the deepest terminal drawdowns ($-40\%$ to $-59\%$);
+the shallowest-drawdown strategies had the least wealth.
+
+\item \textbf{No strategy had both the most wealth and the smallest drawdown.} Every choice traded one
+against the other.
+
+\item \textbf{The diversified mixes (gold + bonds, 30--50\% equity) had higher Sharpe and smaller
+drawdowns than the equity-heavy mixes, and relatively less wealth.} Over this period they produced a
+smoother path and a smaller balance.
+
+\item \textbf{Rebalancing ranked differently by account.} In the taxable account, hard-rebalanced
+versions ended with less wealth than soft or no-rebalancing (the forced sales realize taxed gains); in
+the tax-free account, hard-rebalanced versions were among the highest-ranked. The better rebalancing
+choice was not the same in both accounts.
+
+\item \textbf{Only a handful of strategies were efficient.} Of the 56, five in the taxable account and
+four in the tax-free account were on the efficient frontier within the risk threshold (Section~%
+\ref{sec:frontier}) -- not beaten by another strategy on both wealth and drawdown. The rest were
+dominated.
+
+\item \textbf{Momentum was the most account-sensitive strategy} -- among the highest wealth in the
+tax-free account and near the bottom in the taxable one, driven by the tax on its constant trading.
+
+\end{enumerate}
+
+\section{The Efficient Frontier}\label{sec:frontier}
+
+A strategy is \textbf{efficient} (``on the frontier'') if no other strategy beats it on \emph{both}
+median wealth and terminal pain at once. We further restrict attention to strategies whose terminal
+pain is no deeper than \textbf{$-30\%$}. The ceiling is about $-30\%$; beyond it we judge the potential
+loss too deep to recover from. We weight avoiding that loss more heavily than the extra wealth a riskier
+mix can build. An investor may plan a lifestyle around their perceived wealth, and may be unable to
+support it after a catastrophic loss, with no income stream left to recover from it. What an investor
+perceives as ``catastrophic'' is of course subjective, but as a value judgment we believe a loss
+exceeding $30\%$ is almost certainly catastrophic. Within the threshold we rank the survivors by W/TP
+(median wealth per unit of terminal pain); the full distribution is in Appendix~\ref{sec:fullfield}, so
+a reader can apply a different ceiling. The two account types give different efficient sets.
+
+\paragraph{Taxable.} Five strategies are efficient within the $-30\%$ threshold:
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Strategy & Median wealth & Terminal pain & W/TP \\
+\midrule
+\input{results/eff_taxable.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent(The 50/25/25 mix is efficient at a looser threshold but its terminal pain of $-31\%$ falls
+just outside $-30\%$.)
+
+\paragraph{Tax-free.} Four strategies are efficient within the threshold:
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Strategy & Median wealth & Terminal pain & W/TP \\
+\midrule
+\input{results/eff_taxfree.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Reading the frontier.} The two efficient sets share three names -- the
+\textbf{TDF 90/10$\to$30/70 glide (hard)}, \textbf{All Weather}, and the \textbf{Permanent Portfolio
+(hard)} -- with 60/40 (hard) joining in the tax-free account and a stocks/gold/bonds glide in the
+taxable one. Within each set the choice is by preference: the Permanent Portfolio is the calmest
+(terminal pain near $-16$ to $-18\%$), the richer members carry more terminal pain. Both efficient
+sets are unchanged under a second random seed.
+
+\paragraph{Diversification.} The risk-reducing strategies in the efficient set are diversified across
+several asset classes: All Weather holds stocks, long Treasuries, intermediate bonds, and gold; the
+Permanent Portfolio holds stocks, gold, long Treasuries, and cash. The two stock/bond-only strategies
+on the frontier (60/40 hard, the 90/10$\to$30/70 glide) are efficient on the long-run wealth-versus-pain
+trade, but they concentrate the risk in two asset classes that can fall together.
+Appendix~\ref{sec:calendar} traces the consequence year by year: in the years stocks and bonds fell
+together -- 2008, 2002, 2022 -- a diversified stocks/gold/bonds mix fell substantially less than 60/40,
+cushioned by gold and shorter-duration bonds. Diversification is not a guarantee in every year (in 1981
+gold fell 33\% and the diversified mix fell more than 60/40), and which diversifier helps depends on the
+episode (All Weather's long Treasuries cushioned 2008 but deepened 2022). The 30/30/40 mix used to make
+this point is itself \emph{not} on the efficient frontier -- it is dominated on the long-run trade -- but
+it illustrates the benefit of spreading risk across uncorrelated assets in the years that hurt the most.
+
+\paragraph{The full field.} The complete per-strategy results -- all 56 strategies, both accounts, on
+the actual backtest and at three points of the simulated distribution -- are in Appendix~%
+\ref{sec:fullfield}. The wealth-vs-terminal-pain frontier figures are
+Figures~\ref{fig:frontier_taxable} and~\ref{fig:frontier_taxfree}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{results/frontier_1980_taxable.png}
+\caption{Wealth versus terminal pain, taxable account, 1980--2026. Each dot is one strategy; the red
+line is the efficient frontier. The ideal corner is top-left (most wealth, least pain).}
+\label{fig:frontier_taxable}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{results/frontier_1980_taxfree.png}
+\caption{Wealth versus terminal pain, tax-free account, 1980--2026.}
+\label{fig:frontier_taxfree}
+\end{figure}
+
+% ==========================================================================
+% TODO (to build next, with language review):
+%   - Questions a Careful Reader Will Ask (carry over + update for 1980-only, -30% cap)
+%   - Calendar-year returns, income robustness appendices
+% ==========================================================================
+
+\section{What About Taking More Risk When Young?}\label{sec:youngrisk}
+
+The most common objection to a steady allocation is that a young investor has decades ahead, so they
+can take more risk early and dial it back as retirement nears. The first part is simply true: someone
+in their twenties can absorb a deep loss, because there is time to recover. The question is the dialing
+back. We test it directly: the standard target-date glide from about 90\% stocks down to a 30\% stock / 70\% bond
+endpoint, run as a \emph{hard} rebalance (sells to hold the path) and a \emph{soft} version (redirects
+new contributions only, never sells), plus a variant that ends at 30/30/40 (gold in the endpoint).
+
+{\small
+\begin{center}
+\textit{Target-date glides vs.\ holding 30/30/40 flat, by account (median wealth and terminal pain,
+1980--2026, 1{,}000 histories)}\\[2pt]
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Tax-free} & \multicolumn{2}{c}{Taxable} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Strategy & Wealth & Term.\ pain & Wealth & Term.\ pain \\
+\midrule
+\input{results/glide_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+\noindent The hard stock/bond glide is the most efficient strategy in the field -- the highest wealth
+per unit of terminal pain in \emph{both} accounts (Section~\ref{sec:frontier}). It beats holding
+30/30/40 flat on both axes in both accounts: in the taxable account \$3.22M against \$3.10M with a
+shallower terminal pain ($-19\%$ against $-25\%$), and by more in the tax-free account. So ``risky
+young, safe old,'' run as a rebalanced glide to a conservative endpoint, is supported here -- and unlike
+some framings of the question, it holds up in the taxable account too, where the rebalancing is taxed,
+not only in the shelter.
+
+Three qualifications. First, it must be the \emph{hard} (rebalanced) glide. The soft version never
+trims the early equity, so a large stock position compounds into retirement and the glide ends at
+$-33$ to $-34\%$ terminal pain -- past the $-30\%$ threshold, and deeper than holding flat -- which
+defeats a glide's purpose. Second, the efficient endpoint here is the plain 30/70 \emph{stock/bond}
+mix: the variant that ends at 30/30/40, putting gold in the endpoint, is dominated by it -- the
+de-risking, not the gold, is what lowers terminal pain in a glide. Third, the calm ending is bought
+with a rougher youth: holding 90\% stocks early, the hard glide's 10th-percentile worst-case full
+drawdown reaches $-36.5\%$, against $-28.8\%$ for holding flat. But that loss lands when the balance is
+smallest, so in dollars it costs little, and it is gone before the balance is large enough for a
+drawdown to remove serious money.
+
+And suppose the investor carries the risk anyway. They often end with more money than the cautious one,
+sometimes much more, even when a deep loss is never fully recovered. But that comparison is deceptive. A
+large net worth at the peak is not an abstract number. It sets the house, the spending, the retirement
+date, the commitments a person builds around what they believe they are worth. When a 50\% or 60\%
+drawdown arrives, those commitments are hard to unwind, whatever the investor's appetite for risk.
+Planning a retirement around \$5 million and arriving with \$3 million is still a comfortable retirement.
+It is simply not the one that was planned for.
+
+\section{Bonds from 1980--2026, and an Argument for Diversification}\label{sec:bonds}
+
+Appendix~\ref{sec:calendar} shows that \emph{intermediate} bonds --- the dominant holding in the
+target-date glide that tops the efficient frontier --- never suffered a severe drawdown across 1980--2026. Their
+worst peak-to-trough fall was $-19\%$ (the 2022 rate spike), against $-55\%$ for US stocks, $-73\%$ for
+REITs, and $-46\%$ for long Treasuries. For the intermediate-bond leg the window is a four-decade bull
+market, as rates fell from double digits toward zero, with 2022 the only setback.
+
+The Monte Carlo resamples the 1980--2026 record. In that record intermediate bonds never had a severe
+drawdown --- their worst was $-19\%$ (the 2022 rate spike), against $-55\%$ for stocks
+(Appendix~\ref{sec:calendar}). The strategies that top the efficient frontier hold a high proportion of
+bonds: \textbf{TDF 90/10$\to$30/70} ends at 70\% bonds at the point of largest balance, is efficient at
+every horizon (Appendix~\ref{sec:horizon}), and carries terminal pain of $-18$ to $-19\%$. It holds
+mostly the one asset that did not fall hard in this record.
+
+The bond returns over this window reflect a decades-long fall in interest rates, from double digits
+toward zero. The one bond decline in the record --- 2022, when long Treasuries fell $-46\%$ --- shows
+what a sustained rising-rate or inflationary period could do to a bond-heavy portfolio, and no such
+period is in the 1980--2026 record the Monte Carlo draws from.
+
+The choice turns on what an investor believes about the future of bonds:
+\begin{itemize}
+\item If 46 years of bond history is a deep enough guide --- if the coming decades hold no bond drawdown
+worse than anything in the record --- then \textbf{TDF 90/10$\to$30/70} is among the most efficient ways
+to build wealth here, and the data support it.
+\item If the investor will not hold 70\% bonds at the point of largest balance, near the end of the
+horizon, they would instead take a \emph{diversified} mix that builds wealth within the $-30\%$ cap,
+putting the defensive weight in gold \emph{and} bonds rather than bonds alone.
+\end{itemize}
+
+\noindent The rebalanced stocks/gold/bonds mixes are where that second investor would look. The
+30/30/40, 40/30/30, and 40/25/35 mixes stay within the $-30\%$ cap at every horizon, in both accounts,
+when rebalanced (Appendix~\ref{sec:horizon}). They build less wealth than the bond-heavy glide, but the
+asset that has to hold up in a crisis is split between gold and bonds --- which need not fall together
+--- rather than concentrated in bonds. Appendix~\ref{sec:horizon} lays out which mix, and soft versus
+hard rebalancing, as a wealth-versus-pain trade.
+
+\section{Questions a Careful Reader Will Ask}\label{sec:critiques}
+
+This section anticipates the critiques of the analysis itself.
+
+\paragraph{Aren't these just the funds that happened to perform best, chosen with hindsight?}
+Some hindsight is unavoidable: we choose the portfolio in 2026 knowing how the decades turned out, as
+the asset-selection section concedes. The defense is that the portfolios are deliberately un-clever ---
+each holds roughly equal amounts across a few broad asset classes rather than a concentrated bet on the
+known winner --- and the central finding, that drawdown depth tracks equity weight, is structural rather
+than a forecast. The numbers are directional; reproduce them before relying on a specific figure.
+
+\paragraph{Are these nominal or real (inflation-adjusted) dollars?}
+Nominal --- and that is the right unit, not a shortcoming. The investor reads their account balance in
+nominal dollars, and the household-wealth figures we compare against are reported in nominal dollars of the same
+vintage, so the comparison is like-for-like with no adjustment needed. More to the point, nothing in the
+conclusions turns on the distinction: drawdowns are percentages, the risk-adjusted measures are ratios,
+and the ranking of the mixes and the drawdown ceiling are relative quantities --- all of which a common
+inflation deflator leaves unchanged. Restating the whole study in real terms would shrink every balance
+by the same factor and reorder nothing: the safest mix is still safest, and the gaps are still the gaps.
+Inflation matters greatly for a different question --- whether a given sum is \emph{enough to live on}
+decades hence --- but that is one of purchasing power, separate from which mix the money should go into.
+
+\paragraph{It is still one historical period --- doesn't the Monte Carlo just reshuffle 1980--2026?} The
+window is 46 years, and far from a quiet one: it spans the double-digit inflation of the early 1980s and
+its collapse, the 1987 crash, the dot-com boom and bust, the 2008 financial crisis, the 2020 pandemic,
+and the 2022 rate shock --- most of the regimes a modern investor would worry about. The block bootstrap
+draws contiguous runs of random length --- from a month to about two and a half years --- keeping the
+real structure of crashes, recoveries, and sustained trends intact while varying \emph{when} they
+strike. Drawing a thousand such reorderings and scoring each
+strategy on the resulting \emph{distribution} --- its median final wealth, and its terminal pain, the
+10th percentile of the final-five-year drawdown --- measures the strategy across many plausible sequences
+rather than the single one that happened to occur. The efficient frontier is built on that distribution,
+so the ranking is a property of the spread of outcomes, not of the lucky order in which 1980--2026 fell.
+The one thing no resampling can do is produce a future with no analog in the record, a regime the last
+half-century never saw; that is the limit of any method built on history, not a quirk of this study. Section~\ref{sec:bonds} takes up the case where it
+matters most for the rankings: intermediate bonds never fell hard in this window, so the simulation
+cannot show them falling hard, and the bond-heavy strategies look safer than a serious bond decline could
+prove them to be.
+
+\paragraph{Would a shorter accumulation horizon change which strategies win?} We recomputed the efficient
+set at five shorter horizons --- 31, 35, 38, 40, and 44 years (Appendix~\ref{sec:horizon}). Two strategies stayed on
+the efficient frontier at every one, in both accounts: the 90/10$\to$30/70 target-date glide (hard) and
+the Permanent Portfolio (hard). A wider group never left the \emph{viable} region --- terminal pain
+within the $-30\%$ cap --- at any horizon: the rebalanced diversified mixes that hold equity to about
+40\% or less (30/30/40, 40/30/30, 40/25/35, the Permanent Portfolio, All Weather) and the glides that
+rebalance down to a conservative endpoint. A shorter horizon leaves equity less time to recover from a
+deep crash, so the more equity a strategy carries, the more a late crash costs. The shorter the horizon, then, the stronger the case for carrying less equity --- or for
+actively gliding down to it as retirement nears.
+
+\paragraph{Several legs use proxy or constructed data before the mid-1990s.} They do. International
+stocks and technology use proxy funds of the same class; long Treasuries and cash before their funds
+(1986 and 1991) are constructed from constant-maturity Treasury yields; and REITs before 1986 use the
+monthly Nareit index distributed across trading days. The REIT pre-1986 daily path is therefore
+interpolated and does not carry day-to-day volatility -- the one leg whose pre-fund daily path is
+synthetic at the daily frequency. The construction is set out in Appendix~\ref{sec:datamethod}; strategies
+that depend on these earlier-than-fund series carry the corresponding caveat.
+
+\paragraph{Isn't the $-30\%$ terminal-pain threshold arbitrary?} It is a value judgment, but a reasoned
+one, not an arbitrary cutoff. Section~\ref{sec:frontier} gives the basis: a drawdown beyond roughly
+$30\%$ suffered near retirement --- with little time and no fresh income to rebuild from --- is one we
+judge likely to be unrecoverable for an investor who has built a lifestyle around their expected wealth,
+so we weight avoiding it above the extra wealth a riskier mix can earn. Another investor could
+reasonably place the line at $-25\%$ or $-35\%$; the point is that it follows from a stated principle,
+and we make ours explicit. The threshold also does not change the efficient frontier itself -- the set
+of strategies not beaten by another on both wealth and drawdown -- only which of them an investor would
+consider tolerable; we report the full distribution so a reader can apply a different ceiling.
+Strategies whose terminal pain sits within a few points of $-30\%$ move on and off the within-threshold
+set as the random seed changes, so we treat those as borderline and rest the conclusions on the
+strategies comfortably inside.
+
+\paragraph{Ranking by wealth over terminal pain is just one choice of metric.} Correct, and we use it
+only to \emph{order} strategies that are already on the frontier. The frontier itself is metric-free:
+no strategy on it is beaten on both axes at once. Different objectives select different members of the
+same set -- the most wealth, the calmest, the best risk-adjusted -- which is why all of them are
+reported rather than a single winner.
+
+\paragraph{Why fixed weights rather than an optimization?} A mean-variance optimization would require
+forecasting returns and correlations we do not claim to know, and would itself be fit to this one
+period. Fixed broad weights apply the diversification principle without that forecast. The cost is that
+the weights are not tuned; the benefit is that they are not over-fit.
+
+\paragraph{Don't some of the winners depend on the specific period?} Yes, and we flag the two clearest
+cases. All Weather's risk-adjusted standing leans on long-Treasury returns over a window in which rates
+fell a long way; and the target-date glide minimizes drawdown in the final five years, which is the very
+quantity the terminal-pain metric measures, so a glide scoring well on it is partly built in. The robust
+conclusions are the patterns that survive the second seed, not any single strategy's rank.
+
+\paragraph{The taxes are stylized.} Flat rates and two idealized account types, fully taxable and fully
+tax-free (Appendix~\ref{sec:datamethod}). Real taxation has brackets, state differences, and separate
+schedules for qualified dividends and long-term gains. The after-tax figures are therefore directional
+-- the ordering of strategies and the rough magnitude of the tax drag -- not a precise dollar outcome
+for any individual.
+
+\appendix
+
+\section{Data and Method}\label{sec:datamethod}
+
+\paragraph{Price series.} Each asset is the total-return series of a low-cost fund --- adjusted closing
+prices with dividends reinvested --- extended before that fund's inception by a proxy fund or a
+constructed series of the same type. A proxy is joined at the fund's first trading date by scaling it
+to match the fund's level there, so returns are continuous and the real fund takes over as soon as it
+exists. A proxy-to-fund switch is treated as a tax-free in-kind exchange: the strategy continues to
+hold that one asset, so no sale occurs and no capital gain is realized; only the underlying dividends
+and interest, from whichever fund is live, are taxed. Gold is the LBMA afternoon (PM) fix, a spot
+price with no income; held through a physical-bullion ETF, it carries the management fee under Costs.
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Asset class & Fund (from inception) & Earlier series \\
+\midrule
+US large-cap stocks & VFINX (1980), then SPY & --- \\
+US technology & RYOCX Nasdaq-100 (1994), then QQQ (1999) & broad US stocks before 1994 \\
+International stocks & VGTSX (Apr 1996) & SCINX / PRITX / VTRIX proxies \\
+Real estate (REITs) & FRESX (1986), then VGSIX (1996) & FTSE Nareit All-Equity index, 1980--86 \\
+US aggregate bonds & VBMFX (Dec 1986) & FGOVX, 1980--86 \\
+Long Treasuries & VUSTX (May 1986) & 30-yr constant-maturity yield, 1980--86 \\
+Short Treasuries (cash) & VFISX (Oct 1991) & 13-wk T-bill rate, 1980--91 \\
+Gold & LBMA PM fix (spot) & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+\paragraph{Constructed Treasury and REIT series.} Three legs have no investable fund reaching back to
+1980, so their pre-fund segment is constructed from a published index and then spliced (tax-free, as
+above) into the real fund.
+\begin{itemize}
+\item \textbf{Long Treasuries} (to May 1986) and \textbf{cash / short Treasuries} (to Oct 1991) are
+built from the published constant-maturity Treasury yield --- the 30-year for long, the 13-week
+T-bill for cash. Each day we hold a par Treasury at that maturity and reprice it at the next day's
+yield; the coupon accrual is the taxable income and the price change is capital. The matching fund's
+expense ratio (0.2\%/yr) is applied as a daily drag over the constructed segment, the same way the
+gold fee is applied. After the splice the real fund's net-of-fee returns apply.
+\item \textbf{REITs} (to Nov 1986) use the FTSE Nareit All-Equity monthly total-return
+index;\footnote{FTSE Nareit U.S. Real Estate Index Series, monthly historical returns, Nareit
+(reit.com).} each month's total return is distributed across that month's trading days, with the
+income component split out as taxable, net of a REIT-fund expense ratio (0.7\%/yr), then spliced into
+the FRESX$\to$VGSIX fund chain. \emph{Limitation:} no daily REIT series exists before 1986, so the
+1980--86 daily path is interpolated from monthly data and does not carry day-to-day volatility. This
+is the one leg whose pre-fund daily path is synthetic at the daily frequency.
+\end{itemize}
+Pre-1996 international and technology use proxy \emph{funds} of the same class (no construction). The
+strategies that depend on these earlier-than-fund series carry the corresponding caveat.
+
+\paragraph{Income and dividends.} Interest and dividends come from each fund's actual per-share
+distribution records, captured at their real dates and amounts; for the constructed Treasury and REIT
+segments, the income component of the construction above. These drive the income tax below.
+
+\paragraph{Costs.} The gold leg carries a \textbf{0.4\% annual management fee} (a physical-bullion ETF
+expense ratio), accrued daily as a drag on its value; it is an expense, not a sale, so it realizes no
+capital gain. The constructed long-Treasury, cash, and REIT segments carry the expense ratio of the
+fund they splice into (0.2\% for the Treasuries, 0.7\% for REITs), applied the same way over the
+pre-fund segment. Every purchase and every sale pays a \textbf{0.1\% transaction cost} --- each monthly
+contribution, each hard rebalance, each momentum switch, and each sale made to raise a tax payment. The
+no-rebalance and soft mixes trade only incoming contributions and bear this lightly; the hard-rebalanced
+and momentum strategies turn over more and bear it most. All cost rates are configurable parameters.
+
+\paragraph{Contributions and window.} The investor contributes 20\% of gross salary on the first
+trading day on or after the 15th of each month, with salary set by the $75^{\text{th}}$-percentile
+anchors of \S\ref{sec:about}. All strategies run on \textbf{1980--2026}.
+
+\paragraph{Monte Carlo.} Alternative histories are built by a block bootstrap: contiguous blocks of
+random length (22 to 600 trading days) are drawn with replacement from the real history and stitched
+together until the window is filled. Each day's price return and its dividend yield are resampled
+\emph{together}, so the income structure travels with the price structure. We draw 1{,}000 paths from a
+fixed seed, and re-ran the full Monte Carlo under a second independent seed; the efficient set
+(Section~\ref{sec:frontier}) is unchanged in both accounts, with only strategies sitting at the $-30\%$
+threshold moving across it.
+
+\paragraph{Dividends in the resampled paths.} Real dividends are discrete events --- monthly for bonds
+and Treasuries, quarterly for stocks and the REIT, semiannual for international, none for gold.
+Shuffling days makes the \emph{number} of ex-dates in a synthetic year random: a year can carry more
+dividend events than the asset ever pays, or fewer. To keep the paths realistic, we changed the
+dividend event days to match each asset's real payment cadence. For each asset-year we sum the dividend
+the strategy actually collected ---
+yield times shares held times price, day by day across the year --- and re-lay that received total as
+the asset's usual number of evenly spaced, equal-dollar payments, backing out the per-day yield from
+the share balance and price where each lands. Because receipt depends on the share balance, which the
+contributions grow through the year, the re-bin is applied in-run as two passes: the first records the
+share path, the second re-spaces against it. A year that received nothing stays empty: a sampled year
+can genuinely collect no dividends --- QQQ paid none until 2003, gold none ever --- so we leave it at
+zero rather than manufacture one. Because we did not change the
+annual dividend amounts in these paths, our changes do not impact the actual returns or taxes in either
+account.
+
+\paragraph{Taxes --- and why they are directional.} The tax model below applies to a fully taxable
+account. The report also runs every strategy in a fully tax-free account (Roth or 401k), where these
+taxes are waived; the account-aware comparison covers the two. \emph{Income} is taxed each year: bond and Treasury interest at 20\% (Treasury interest is largely
+state-exempt, which lowers its effective rate), stock dividends and REIT distributions at 25\%, gold
+nothing. It is accrued per asset by calendar year and paid the following January by selling that same
+asset. \emph{Realized capital gains} --- from the hard-reset rebalancing (a variant of every static mix
+here) and the momentum strategy's switches --- are taxed at 25\% the same way; the soft-rebalanced and
+buy-and-hold strategies never sell to rebalance, so their only tax is on income.
+
+Real taxation is far more intricate than this. Brackets rise with income, states differ, long- and
+short-term gains run on separate schedules, dividends split into qualified and non-qualified, the net
+investment income tax applies above certain thresholds, and holding an asset in a taxable versus a
+tax-deferred account changes everything. We deliberately use flat rates and two stylized account types
+--- fully taxable and fully tax-free. The
+after-tax figures should therefore be read as \textbf{directional}: they show the \emph{ordering} of
+the strategies and the rough \emph{magnitude} of the tax drag --- which mixes are hit hardest --- not a
+precise dollar outcome for any individual.
+
+\section{Calendar-Year Returns and Diversification, 1980--2026}\label{sec:calendar}
+
+\noindent Annual total returns for each leg (stocks and bonds include dividends; gold is price) and for
+the 30/30/40 mix. The blend column is the soft 30/30/40's \textbf{time-weighted return (TWR)} each
+year: from the strategy's actual value path, we remove each day's contribution before measuring the
+daily return, then compound those over the year. (1980 is measured from January~15 and 2026 is
+year-to-date through June~1.) The blend is a weighted combination of the legs, so its return in any
+year is mechanically the sum of the legs' returns at their weights -- which is what lets the other legs
+cushion a fall in one.
+
+{\footnotesize
+\begin{center}
+\begin{minipage}[t]{0.46\textwidth}
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+Year & Stocks & Gold & Bonds & 30/30/40 \\
+\midrule
+\input{results/calendar_rows_left.tex}\\
+\bottomrule
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.46\textwidth}
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+Year & Stocks & Gold & Bonds & 30/30/40 \\
+\midrule
+\input{results/calendar_rows_right.tex}\\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{center}
+}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{results/calendar_60_40_vs_div.png}
+\caption{Calendar-year return, 60/40 (stocks/bonds) versus diversified 30/30/40 (with gold), 1980--2026.
+In the years the stock/bond mix fell hardest, the diversified mix fell less.}
+\label{fig:calendar}
+\end{figure}
+
+\paragraph{The diversification benefit, in the years it mattered.} 60/40 had eight down years over the
+window. The table below sets them beside gold's return that year and the diversified 30/30/40:
+
+{\small
+\begin{center}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+Year & Gold & 60/40 & 30/30/40 \\
+\midrule
+\input{results/downyears_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+In the three worst years for a stock/bond portfolio -- 2008 ($-21\%$), 2002 ($-11\%$), and 2022
+($-17\%$) -- gold was flat or up, and the diversified 30/30/40 fell much less ($-7.5\%$, $+0.1\%$,
+$-12.0\%$). 2022 is the pointed case: it is the one year in the window stocks \emph{and} bonds fell
+together, the scenario a 60/40 has no defense against, and the gold holding is what cushioned the
+diversified mix. The benefit is not automatic every year: in 1981 gold fell 33\% and the diversified
+mix fell more than 60/40; and the diversifier matters -- All Weather's long Treasuries cushioned 2008
+(it fell only $-1.8\%$) but deepened 2022 (it fell $-19.1\%$, worse than 60/40), because long-duration
+bonds rallied in the 2008 flight to quality and crashed in the 2022 rate spike. The 30/30/40 mix shown
+here is \emph{not} on the efficient frontier -- it is dominated on the long-run wealth-versus-pain trade
+-- but it illustrates the point plainly: spreading risk across assets that do not all fall together
+cushions the years that hurt the most. No one can predict the future; but a repeat of a 2022-type year
+would, on this evidence, be expected to hurt a concentrated stock/bond mix more than a gold-holding
+diversified one.
+
+\paragraph{Worst drawdown by asset class.} The single deepest peak-to-trough fall each asset suffered
+over the window (daily total return) is uneven, and the unevenness matters for what follows:
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lrcr@{}}
+\toprule
+Asset class & Worst drawdown & Period & Underwater \\
+\midrule
+\input{results/asset_dd_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+\noindent\footnotesize $^{*}$Still below the prior peak at the window's end (June 2026).\normalsize\
+US stocks, REITs, gold, and long Treasuries each suffered a \emph{severe} drawdown ($-46\%$ to $-73\%$)
+somewhere in the window. \textbf{Intermediate bonds did not} --- their worst was $-19\%$, in the 2022
+rate spike. The 1980--2026 record is, for the intermediate-bond leg, essentially one long bull market
+as rates fell from double digits toward zero. Section~\ref{sec:bonds} takes up what that means for the
+strategies that lean on it.
+
+\section{Income-Path Robustness}\label{sec:incomepath}
+
+The base case assumes a rising $75^{\text{th}}$-percentile salary. To check whether the income path
+changes the conclusions, we re-run a representative set of strategies under four trajectories that hold
+the \emph{same} lifetime contribution (about \$532k) but differ in \emph{when} it arrives: \emph{base}
+(the rising-salary path), \emph{flat} (equal every month), \emph{front-loaded} (more early), and
+\emph{late-bloomer} (more late). Figures are the realized 1980--2026 backtest, taxable account, final
+wealth in \$M.
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Strategy & Base & Flat & Front-loaded & Late-bloomer \\
+\midrule
+\input{results/income_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+The level of wealth depends on the timing: contributions made earlier spend longer compounding, so the
+front-loaded path ends about 2.5--3$\times$ richer than the late-bloomer path for the same total
+contributed. The ordering of strategies is broadly stable -- the equity-heavy mixes lead and the
+diversified mixes trail under every trajectory -- with reshuffling only among strategies whose wealth
+is within a few percent of each other (for example 30/30/40 and All Weather).
+
+\section{Missed Contributions}\label{sec:lazy}
+
+The base case contributes every month. To check sensitivity to missed contributions --- a job loss, an
+emergency, a month the money went elsewhere --- we skip \textbf{25\% of monthly contributions at
+random}; we run 500 independent skip patterns. Figures are the realized 1980--2026 backtest, taxable
+account.
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{Every month} & \multicolumn{3}{c}{Skips 25\%} \\
+Strategy & Final & Max DD & Mean final & Ratio [10--90th] & Max DD \\
+\midrule
+\input{results/lazy_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+Skipping a quarter of the contributions reduces final wealth by about a quarter (the ratio is near 0.75
+for every strategy, with a 10--90th-percentile band of roughly 0.72--0.78), and leaves the maximum
+drawdown essentially unchanged. The proportional effect is the same across strategies, so the ranking
+is unchanged; the cost of the missed contributions is a smaller balance, not a different conclusion.
+
+\section{Horizon Robustness}\label{sec:horizon}
+
+The base case accumulates for \textbf{46 years} (age 21 to 67). Not every investor saves that long, so
+we test whether the efficient set holds at shorter horizons --- \textbf{31, 35, 38, 40, 44, and 46
+years}. The Monte Carlo paths are drawn from the same full 1980--2026 return pool as everywhere else. A
+\emph{static} mix holds fixed weights, so the first $H$ years of a 46-year path is itself a valid
+$H$-year run, and we slice it. A \emph{glide} is horizon-specific by construction --- a 46-year
+90/10$\to$30/70 glide is only two-thirds of the way to its endpoint at year 31 --- so each glide is
+rebuilt to \emph{complete at the horizon} (the continuous glides reach their endpoint at $H$; the
+stepped glides place their transitions at the same fractions of the shorter span) and run separately at
+each horizon. Terminal pain is measured over the final five years before each cutoff. At each horizon
+and account we recompute the within-cap ($\leq -30\%$ terminal pain) efficient frontier; the table marks
+which strategies stay efficient.
+
+{\footnotesize
+\begin{center}
+\textit{Within-cap efficient strategies by accumulation length (years) and account (1980 return pool, 1{,}000 histories)}\\[2pt]
+\begin{tabular}{@{}lcccccccccccc@{}}
+\toprule
+ & \multicolumn{6}{c}{Taxable} & \multicolumn{6}{c}{Tax-free} \\
+\cmidrule(lr){2-7}\cmidrule(lr){8-13}
+Strategy & 31 & 35 & 38 & 40 & 44 & 46 & 31 & 35 & 38 & 40 & 44 & 46 \\
+\midrule
+\input{results/horizon_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+
+\noindent Two strategies --- the \textbf{90/10$\to$30/70 target-date glide (hard)} and the
+\textbf{Permanent Portfolio (hard)} --- are efficient at every horizon in both accounts; no other
+strategy is. The rest of the set changes with the horizon. The glide's terminal pain is lower at the
+shorter horizons, not higher: an investor retiring sooner reaches its 70\%-bond endpoint earlier, so its
+terminal pain falls to about $-18\%$. This is the bond effect of Section~\ref{sec:bonds} --- the glide's
+low terminal pain comes from a large intermediate-bond weight, and the record never tested that weight
+against a serious bond fall.
+
+\paragraph{The diversified mixes by horizon.} Median wealth and terminal pain for the stocks/gold/bonds
+family (taxable account; median wealth \$M / terminal pain \%), each in its three rebalancing variants:
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Strategy & 31yr & 35yr & 38yr & 40yr & 44yr & 46yr \\
+\midrule
+\input{results/horizon_div_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+\noindent Hard rebalancing holds terminal pain within the $-30\%$ cap across all four mixes at every
+horizon, and roughly flat across horizons. The soft versions stay within the cap as well, except
+50/25/25, which reaches $-31\%$ by year 44. The never-rebalance versions breach at the longer horizons:
+with no trimming, the equity weight drifts up over time, so terminal pain deepens with both equity and
+horizon --- 40/30/30, 40/25/35, and 50/25/25 reach $-34\%$ to $-37\%$ by year 46, while 30/30/40 sits at
+$-30\%$. The tax-free account is similar, with higher wealth and comparable terminal pain. None of these
+mixes matches the bond-heavy glide on wealth per unit of terminal pain, but each splits its defensive
+weight between gold and bonds rather than bonds alone.
+
+\paragraph{Does a pick stay viable if you work longer than planned?} Suppose you choose a fixed-weight
+mix --- one held to constant target weights, not a glide --- that sits within the $-30\%$ cap for a
+retirement planned at year $H$, then keep saving to year 46. Does its terminal pain cross the cap?
+Almost none do. The one exception is 50/25/25 (soft), and it crosses only marginally: $-29\%$ at the
+shorter horizons, $-31\%$ at year 46. Every mix well inside the cap stays inside; the Permanent Portfolio
+(hard), for one, holds near $-17\%$ throughout. A glide is a separate case: it is built for a chosen
+horizon, so working longer means rebuilding it to a later endpoint, not carrying the old one on.
+
+\noindent One caveat covers the whole appendix. Every horizon here is the same 1980--2026 return history
+read at a different stopping point, so these results show the conclusions hold whether you accumulate for
+31 years or 46 --- not that they would hold in a future unlike 1980--2026. No resampling of a single
+history can establish that (Section~\ref{sec:critiques}).
+
+\section{All Strategies, Both Account Types}\label{sec:fullfield}
+
+\noindent All 56 strategies run in full, across both account types (fully taxable and fully tax-free).
+Each strategy is shown under four outcomes: the actual realized backtest, and three illustrative Monte
+Carlo paths (the median by return, the 10th percentile by return, and the 10th percentile by maximum
+drawdown).
+
+\emph{Each column is one whole path.} The eight figures stacked in a cell --- wealth, IRR, full maximum
+drawdown, final-five-year drawdown, peak-to-trough years, recovery, Sharpe, and Calmar --- all come from
+that single outcome; nothing is stitched together across paths.
+
+\emph{Two terminal-pain figures appear, and they are not the same thing.} The fourth line in each cell
+is \emph{that path's own} drawdown in its final five years. The figure printed under each strategy
+\emph{name} is the strategy's \emph{terminal pain}, the 10th-percentile final-five-year drawdown across
+all 1{,}000 paths --- a percentile of the whole distribution, so it lives in no single path.
+
+\input{wealth_tables.tex}
+
+\end{document}
