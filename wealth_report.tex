@@ -34,6 +34,7 @@
 
 \input{results/stock_dd_macros.tex}   % computed figures for the Market-Concentration section
 \input{results/collins_macros.tex}    % terminal-pain figures for the Collins rebuttal
+\input{results/scenario_macros.tex}   % 2022 calendar figures for the Dec-2021 flip call-out
 
 \title{\textbf{The Efficient Frontier of Dollar Cost Averaging:\\ Balancing Expected Wealth Against Terminal Pain}}
 \author{}
@@ -502,7 +503,7 @@ hard rebalancing, as a wealth-versus-pain trade.
 
 \section{Why Stocks Only is Dangerously Wrong}\label{sec:concentration}
 
-\begin{tcolorbox}[breakable, colback=black!4!white, colframe=black!55!white,
+\begin{tcolorbox}[breakable, colback=blue!4!white, colframe=blue!50!black,
   title=\textbf{A scenario: one year from retirement, March 2020}]
 You are a year from retirement. For a working lifetime you did what the most trusted advice in personal
 finance says: you held the total US stock market, nothing else, and never sold. It worked --- your
@@ -523,6 +524,37 @@ And \$\StockOnlyCovid M is still a fortune --- it just does not feel like one. T
 years left to rebuild. And the peak was never just a number --- it had set the retirement date, the
 house, the spending, what would go to the children. \$\StockOnlyCovid M is a comfortable retirement; it
 is simply not the one that was planned, arriving when nothing can be done about it.
+\end{tcolorbox}
+
+\begin{tcolorbox}[breakable, colback=blue!4!white, colframe=blue!50!black,
+  title=\textbf{Eighteen months later: you held on, and you were right}]
+You rode out March 2020, the market roared back, and through 2021 you sit at a fresh all-time high, a
+year from retirement. Rattled by that March, you finally do what Collins prescribes for the home stretch
+and move to his 75/25 --- the total stock market (VTSAX) and the total bond market (VBTLX). But there is
+a catch the advice skips. After forty years of holding, about \GainFrac\% of your stock is embedded gain,
+so the moment you sell, the tax is large --- and to reach a \emph{true} 75/25 you cannot sell just 25\%:
+the tax comes out of the proceeds, leaving you nearer 80/20. So you sell about \FlipSalePct\% of the
+stock and hand over roughly \$\FlipTax M, some \FlipTaxPct\% of your \$\StockOnlyWealth M, in
+capital-gains tax. Voluntarily, at the peak, to feel safe.
+
+Then 2022 --- your retirement year --- arrives, the one year in the record when stocks \emph{and} bonds
+fell together. From the December high your 75/25 falls \SevenFiveDD\% to its low; add the tax you have
+already paid and you are down \FlipTotalDD\% from where you started --- \emph{deeper} than the
+\StockDD\% you would have suffered doing nothing at all. The move meant to protect you made the hole
+bigger, because VBTLX, the very fund Collins names for safety, fell \BondDD\% right alongside stocks: the
+cushion had nothing to cushion. (A diversified 30/30/40 fell \DivDD\% over the same months --- chiefly
+because it held 30\% in stocks rather than 75\%, the rest spread across gold and bonds that did not all
+bottom together.)
+
+None of this means the instinct was wrong. At the cusp of retirement it is entirely reasonable to want
+less pain. The lesson is narrower and sharper: a large, one-time conversion of a concentrated, low-basis
+position is itself a risky act --- it crystallises a tax bill at whatever price the market happens to be,
+and buys a cushion that may not cushion. The deeper point is that the safety a near-retiree wants is not
+something bought at the end at all. It comes from holding a diversified mix --- a spread of assets that do
+not move together --- \emph{at all times} through the accumulation, by whatever method suits the investor:
+a static blend, soft rebalancing, hard rebalancing, or a glide. Diversify throughout, and there is never
+a concentrated position to unwind, no forced sale at a peak, and the book is already cushioned when the
+bad year comes.
 \end{tcolorbox}
 
 That gap --- between the life planned at the peak and the life the market leaves --- is the risk this
@@ -620,10 +652,15 @@ tied himself to that mast at the peak waited more than three decades just to bre
 
 This is why the argument of this report is for diversification \emph{across} assets that do not move
 together, not only \emph{within} one of them. Collins's own shift to bonds in retirement grants the
-principle; the report starts the glide earlier and splits the defensive weight between gold and bonds
-rather than bonds alone. Ray Dalio calls a portfolio of fifteen or twenty uncorrelated return streams
+principle; the difference is that the diversified mixes here hold that spread from the start, and split
+the defensive weight between gold and bonds rather than bonds alone. Ray Dalio calls a portfolio of fifteen or twenty uncorrelated return streams
 the ``Holy Grail of investing,'' because combining them can cut risk sharply without giving up expected
-return.\footnote{Ray Dalio, \emph{Principles} (Simon \& Schuster, 2017).} A broad stock index
+return.\footnote{Ray Dalio, \emph{Principles} (Simon \& Schuster, 2017). Dalio's own All Weather
+portfolio is itself bond-heavy --- in this study 40\% long Treasuries and 15\% intermediate bonds,
+against 30\% stocks and 15\% gold --- and it is among the efficient strategies in the backtest
+(Section~\ref{sec:frontier}). That showing, though, owes much to the 1980--2026 bond bull
+(Section~\ref{sec:bonds}); the same long-Treasury weight that carried it is what would expose it to the
+rising-rate shock that struck in 2022.} A broad stock index
 diversifies away the risk that any one company fails; it does nothing about the risk that stocks as a
 class have a decade --- or, as in Japan, a generation --- that does not come back. That is the gap the
 gold and bond holdings are there to cover.

@@ -59,7 +59,9 @@ present (a one-time manual download, see below). The Monte Carlo stage takes rou
   also prints the within-cap efficient ranking (`stability` and `s<seed>` modes for robustness).
 - `calendar_compare.py` — calendar-year returns (60/40 vs diversified 30/30/40) and asset-class worst
   drawdowns → `results/calendar_60_40_vs_div.png`, `calendar_rows_*.tex`, `downyears_rows.tex`,
-  `asset_dd_rows.tex`.
+  `asset_dd_rows.tex`; also the figures for the §8 Dec-2021 flip call-out (the 2022 static drawdowns of
+  stocks/bonds/gold and the 75/25 and 30/30/40 mixes, and the capital-gains cost of converting a
+  40-year all-stock book to a true 75/25) → `results/scenario_macros.tex`.
 - `robustness.py` — the income-path and lazy-investor (skip-25%-of-contributions) checks →
   `results/income_rows.tex`, `lazy_rows.tex`.
 - `horizon_robust.py` — re-evaluates the within-cap efficient set at shorter accumulation horizons
