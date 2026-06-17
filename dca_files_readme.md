@@ -71,6 +71,9 @@ present (a one-time manual download, see below). The Monte Carlo stage takes rou
   `results/stock_dd_macros.tex` (every figure the section's prose cites). Every drawdown and recovery
   figure is computed from the cached prices; only the index market-cap/weight constants are cited (and
   isolated in the script). `--no-fetch` reuses the cached CSV.
+- `collins_pain.py` — terminal-pain figures for the Collins rebuttal: runs the engine (1980 block
+  bootstrap, seed 42, soft, taxable) for a 100%-US-stock book vs the diversified 30/30/40 and writes
+  each one's terminal pain and median wealth → `results/collins_macros.tex`.
 
 **Report**
 - `wealth_report.tex` → `wealth_report.pdf`. Inputs `wealth_tables.tex` and the figures above.

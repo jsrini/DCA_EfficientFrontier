@@ -33,6 +33,7 @@
   \renewcommand{\footrulewidth}{0.4pt}}
 
 \input{results/stock_dd_macros.tex}   % computed figures for the Market-Concentration section
+\input{results/collins_macros.tex}    % terminal-pain figures for the Collins rebuttal
 
 \title{\textbf{The Efficient Frontier of Dollar Cost Averaging:\\ Balancing Expected Wealth Against Terminal Pain}}
 \author{}
@@ -546,7 +547,9 @@ is what the haystack now holds.
 The exposure is also far greater than it was at the last technology peak. The Nasdaq-100 --- essentially
 the large technology names --- is now about \$\NdxMktcap\ trillion, roughly \NdxShareNow\% of the
 \$\UsMktcap\ trillion total US market; the ten largest stocks alone are about \TopTenNow\% of the S\&P
-500, against roughly \TopTenThen\% at the 2000 peak. A repeat of the dot-com decline --- the Nasdaq-100,
+500, against roughly \TopTenThen\% at the 2000 peak.\footnote{These market-concentration figures are as
+of \ConcAsOf{} and, unlike the drawdowns in this section, are not computed from price data: \ConcSources}
+A repeat of the dot-com decline --- the Nasdaq-100,
 which an investor could buy as the QQQ fund from March 1999, fell about \NasdaqDotcomDecline\% into 2002
 and took roughly \NasdaqDotcomRecoverYears\ years to regain its price --- would, from a \NdxShareNow\%
 weight, erase on the order of \EraseNow\% of the
@@ -557,28 +560,50 @@ concentrated bet has become the index itself. This is the risk the diversificati
 Section~\ref{sec:assetselection} is meant to blunt, and the reason the diversified portfolio holds only
 30\% in stocks: a shock of that kind strikes a fraction of the portfolio rather than the bulk of it.
 
-Finally, the belief that ``the market always comes back'' describes US history; it is not a law that
-holds everywhere. Japan's Nikkei~225 peaked at the end of \JapanPeakYear, fell \JapanDecline\% to its
-\JapanTroughYear\ low, and did not close back above its \JapanPeakYear\ high until \JapanRecoverYear{}
---- \JapanRecoverYears\ years later. An investor who bought the leading index of what was then the world's
-second-largest economy, at its peak, waited more than three decades just to break even on price. A
-concentrated position that has to recover is betting that the US market will keep being the exception.
+The most emphatic popular case for stocks is JL Collins's. In \emph{The Simple Path to Wealth} and his
+widely read ``Stock Series,'' he tells the investor building wealth to own one thing --- the total US
+stock market, through the fund VTSAX --- and to hold it through every crash without selling. His image
+is Odysseus and the Sirens: ``tie yourself to the mast and stay the course,'' he writes, because ``the
+market always recovers and resumes its relentless rise''; if you cannot do that, he says plainly, this
+way of investing is not for you.\footnote{JL Collins, \emph{The Simple Path to Wealth} (2016); the
+``Stock Series'' at jlcollinsnh.com.} To be fair, he is not against bonds --- once the investor stops
+working and lives on the portfolio, he shifts to roughly 75\% stocks and 25\% bonds to smooth the
+ride.\footnote{JL Collins, ``Stocks --- Part XXIII: Selecting Your Asset Allocation,'' jlcollinsnh.com
+(2014).} But through the accumulation years --- the whole span this study covers --- he is unambiguous:
+hold stocks, very nearly only stocks, and sit through the drops.
+
+The mast holds because the storm passes, and that logic is sound --- while there is time for the storm
+to pass. The objection here is not the one Collins answers. It is not whether the investor can
+\emph{tolerate} a deep drop; an investor with perfect nerve still should not carry an all-stock book
+into the last years of accumulation. The reason is timing, not temperament. Terminal pain --- this
+report's main risk measure --- is the 10th-percentile drawdown over the final five years before
+retirement, when the balance is at its largest and the years left to recover are gone. Run through the
+same 1980--2026 Monte Carlo as every other figure here, a 100\%-US-stock book carries terminal pain of
+about $-\StockOnlyPain\%$, against $-\DivPain\%$ for the diversified 30/30/40 --- nearly twice as deep
+--- in exchange for a higher median wealth
+(\$\StockOnlyWealth M versus \$\DivWealth M). Early in accumulation a fall like that is survivable: the
+balance is small, the monthly contributions keep buying, and the storm passes with decades to spare.
+Close to the end it may pass too late. The recovery can arrive after the money was needed --- after the
+paychecks stop and the withdrawals begin --- and a paper loss that would have healed in time becomes a
+permanent cut to the retirement it was meant to fund.
+
+And sometimes the storm does not pass on any human schedule. ``The market always recovers'' describes US
+history; it is not a law that holds everywhere. Japan's Nikkei~225 peaked at the end of \JapanPeakYear,
+fell \JapanDecline\% to its \JapanTroughYear\ low, and did not close back above its \JapanPeakYear\ high
+until \JapanRecoverYear{} --- \JapanRecoverYears\ years later.\footnote{\JapanSource} An investor who
+tied himself to that mast at the peak waited more than three decades just to break even on price.
 
 This is why the argument of this report is for diversification \emph{across} assets that do not move
-together, not only \emph{within} one of them. Ray Dalio calls a portfolio of fifteen or twenty
-uncorrelated return streams the ``Holy Grail of investing,'' because combining them can cut risk sharply
-without giving up expected return.\footnote{Ray Dalio, \emph{Principles} (Simon \& Schuster, 2017).} A
-broad stock index diversifies away the risk that any one company fails; it does nothing about the risk
-that stocks as a class have a decade --- or, as in Japan, a generation --- that does not come back. That
-is the gap the gold and bond holdings are there to cover.
-
-\smallskip
-\noindent\footnotesize Market-concentration figures are as of \ConcAsOf{} and, unlike the drawdowns
-above, are not computed from price data: \ConcSources{} \JapanSource\normalsize
+together, not only \emph{within} one of them. Collins's own shift to bonds in retirement grants the
+principle; the report starts the glide earlier and splits the defensive weight between gold and bonds
+rather than bonds alone. Ray Dalio calls a portfolio of fifteen or twenty uncorrelated return streams
+the ``Holy Grail of investing,'' because combining them can cut risk sharply without giving up expected
+return.\footnote{Ray Dalio, \emph{Principles} (Simon \& Schuster, 2017).} A broad stock index
+diversifies away the risk that any one company fails; it does nothing about the risk that stocks as a
+class have a decade --- or, as in Japan, a generation --- that does not come back. That is the gap the
+gold and bond holdings are there to cover.
 
 \section{Questions a Careful Reader Will Ask}\label{sec:critiques}
-
-This section anticipates the critiques of the analysis itself.
 
 \paragraph{Aren't these just the funds that happened to perform best, chosen with hindsight?}
 Some hindsight is unavoidable: we choose the portfolio in 2026 knowing how the decades turned out, as
@@ -588,7 +613,7 @@ known winner --- and the central finding, that drawdown depth tracks equity weig
 than a forecast. The numbers are directional; reproduce them before relying on a specific figure.
 
 \paragraph{Are these nominal or real (inflation-adjusted) dollars?}
-Nominal --- and that is the right unit, not a shortcoming. The investor reads their account balance in
+Nominal --- and that is the right unit. The investor reads their account balance in
 nominal dollars, and the household-wealth figures we compare against are reported in nominal dollars of the same
 vintage, so the comparison is like-for-like with no adjustment needed. More to the point, nothing in the
 conclusions turns on the distinction: drawdowns are percentages, the risk-adjusted measures are ratios,
