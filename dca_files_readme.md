@@ -65,6 +65,12 @@ present (a one-time manual download, see below). The Monte Carlo stage takes rou
 - `horizon_robust.py` — re-evaluates the within-cap efficient set at shorter accumulation horizons
   (31–46 years); static mixes are sliced from one path, glides rebuilt to complete at each horizon →
   `results/horizon_rows.tex`, `horizon_div_rows.tex` (cache: `results/horizon_raw.npy`).
+- `build_stock_dd.py` — the Market-Concentration section's data: fetches split-adjusted prices for the
+  named large-cap stocks, QQQ (Nasdaq-100), and the Nikkei 225 from Yahoo, caches them to the committed
+  `stock_dd_prices.csv`, and writes `results/stock_dd_rows.tex` (the drawdown table) and
+  `results/stock_dd_macros.tex` (every figure the section's prose cites). Every drawdown and recovery
+  figure is computed from the cached prices; only the index market-cap/weight constants are cited (and
+  isolated in the script). `--no-fetch` reuses the cached CSV.
 
 **Report**
 - `wealth_report.tex` → `wealth_report.pdf`. Inputs `wealth_tables.tex` and the figures above.
@@ -74,6 +80,8 @@ present (a one-time manual download, see below). The Monte Carlo stage takes rou
 - `dca_adj_div_80full.csv` / `dca_yield_div_80full.csv` — the unified 8-leg 1980–2026 dataset (price
   level + income yield).
 - `longt_series.csv`, `cash_series.csv`, `reit_series.csv` — the three constructed legs.
+- `stock_dd_prices.csv` — committed cache of the individual-stock / QQQ / Nikkei prices for the
+  Market-Concentration section (so `--no-fetch` reproduces it offline).
 - `results/tpb_1980_*.npy`, `results/core_1980_*.npy` — the Monte Carlo stores.
 - `results/frontier_1980_*.png`, `results/calendar_60_40_vs_div.png` — the figures.
 - `wealth_tables.tex`, `results_record.md` — the generated table and stats record.

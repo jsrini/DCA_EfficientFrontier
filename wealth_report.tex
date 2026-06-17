@@ -32,6 +32,8 @@
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0.4pt}}
 
+\input{results/stock_dd_macros.tex}   % computed figures for the Market-Concentration section
+
 \title{\textbf{The Efficient Frontier of Dollar Cost Averaging:\\ Balancing Expected Wealth Against Terminal Pain}}
 \author{}
 \date{June 2026}
@@ -496,6 +498,83 @@ when rebalanced (Appendix~\ref{sec:horizon}). They build less wealth than the bo
 asset that has to hold up in a crisis is split between gold and bonds --- which need not fall together
 --- rather than concentrated in bonds. Appendix~\ref{sec:horizon} lays out which mix, and soft versus
 hard rebalancing, as a wealth-versus-pain trade.
+
+\section{Stocks, and an Argument for Diversification}\label{sec:concentration}
+
+A natural objection to a diversified, gold- and bond-heavy portfolio is that one could simply own the
+handful of great technology companies that have led the market. The record of individual stocks is a
+caution against that.
+
+Cisco was not a speculative start-up. In March 2000 it was briefly the most valuable company in the
+world --- profitable, and dominant in the internet's core networking equipment --- exactly the kind of
+``quality'' name an investor would feel safe holding forever. Its shares still fell \CiscoDecline\% over
+the following two and a half years, and did not regain their March 2000 price for more than
+\CiscoRecoverYears\ years.
+
+{\small
+\begin{center}
+\begin{tabular}{@{}lcccr@{}}
+\toprule
+Company & Peak & Trough & Decline & Time to recover \\
+\midrule
+\input{results/stock_dd_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
+}
+\noindent\footnotesize Deepest drawdown by split-adjusted share price; time to recover is from the peak
+back to that price. Cisco recovered earlier, in \CiscoTRRecoverYear, on a total-return basis with
+dividends reinvested. Below Cisco, each row is that company's deepest fall within the last seven
+years.\normalsize
+
+\medskip
+Nothing about being large, profitable, or dominant prevented Cisco's fall, and nothing exempts today's
+leaders from the same possibility. Each of the seven largest technology companies has already fallen
+between \BigTechMinDecline\% and \BigTechMaxDecline\% within the last seven years alone; that those
+declines reversed within a few years, rather than a few decades, is a fact about the recent past, not a
+guarantee.
+
+The usual answer to this is not to pick stocks but to buy the whole market, and its most credible
+advocates are emphatic about it. Warren Buffett's instruction for the trust he leaves his wife is to
+``put 10\% of the cash in short-term government bonds and 90\% in a very low-cost S\&P 500 index
+fund'';\footnote{Warren E.\ Buffett, Berkshire Hathaway Inc.\ 2013 Letter to Shareholders.} John Bogle,
+who built the first index fund, reduced it to ``don't look for the needle in the haystack --- just buy
+the haystack.''\footnote{John C.\ Bogle, \emph{The Little Book of Common Sense Investing} (Wiley, 2007).}
+On the record above we agree: owning the broad index has beaten owning the names inside it. The question
+is what the haystack now holds.
+
+The exposure is also far greater than it was at the last technology peak. The Nasdaq-100 --- essentially
+the large technology names --- is now about \$\NdxMktcap\ trillion, roughly \NdxShareNow\% of the
+\$\UsMktcap\ trillion total US market; the ten largest stocks alone are about \TopTenNow\% of the S\&P
+500, against roughly \TopTenThen\% at the 2000 peak. A repeat of the dot-com decline --- the Nasdaq-100,
+which an investor could buy as the QQQ fund from March 1999, fell about \NasdaqDotcomDecline\% into 2002
+and took roughly \NasdaqDotcomRecoverYears\ years to regain its price --- would, from a \NdxShareNow\%
+weight, erase on the order of \EraseNow\% of the
+entire US market even if every other stock held flat, and more once they did not. In 2000 that same
+index was only about a third of the market, so an identical decline subtracted closer to \EraseThen\%
+and the rest of the market cushioned the blow; today there is far less to cushion with --- the
+concentrated bet has become the index itself. This is the risk the diversification of
+Section~\ref{sec:assetselection} is meant to blunt, and the reason the diversified portfolio holds only
+30\% in stocks: a shock of that kind strikes a fraction of the portfolio rather than the bulk of it.
+
+Finally, the belief that ``the market always comes back'' describes US history; it is not a law that
+holds everywhere. Japan's Nikkei~225 peaked at the end of \JapanPeakYear, fell \JapanDecline\% to its
+\JapanTroughYear\ low, and did not close back above its \JapanPeakYear\ high until \JapanRecoverYear{}
+--- \JapanRecoverYears\ years later. An investor who bought the leading index of what was then the world's
+second-largest economy, at its peak, waited more than three decades just to break even on price. A
+concentrated position that has to recover is betting that the US market will keep being the exception.
+
+This is why the argument of this report is for diversification \emph{across} assets that do not move
+together, not only \emph{within} one of them. Ray Dalio calls a portfolio of fifteen or twenty
+uncorrelated return streams the ``Holy Grail of investing,'' because combining them can cut risk sharply
+without giving up expected return.\footnote{Ray Dalio, \emph{Principles} (Simon \& Schuster, 2017).} A
+broad stock index diversifies away the risk that any one company fails; it does nothing about the risk
+that stocks as a class have a decade --- or, as in Japan, a generation --- that does not come back. That
+is the gap the gold and bond holdings are there to cover.
+
+\smallskip
+\noindent\footnotesize Market-concentration figures are as of \ConcAsOf{} and, unlike the drawdowns
+above, are not computed from price data: \ConcSources{} \JapanSource\normalsize
 
 \section{Questions a Careful Reader Will Ask}\label{sec:critiques}
 
