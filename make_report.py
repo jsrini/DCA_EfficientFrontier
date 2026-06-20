@@ -66,6 +66,7 @@ run("5. figure: efficient frontier, tax-free", "python3", "plot_frontier.py", "1
 run("5. table: young-risk glide table", "python3", "plot_frontier.py", "1980", "glidetable")
 run("5. table: individual-stock drawdowns (Yahoo)", "python3", "build_stock_dd.py", *(("--no-fetch",) if NOFETCH else ()))
 run("5. table: terminal-pain figures for the Collins rebuttal", "python3", "collins_pain.py")
+run("5. table: wind-down-to-cash strategy (Section 8 close + Appendix H)", "python3", "winddown_strategy.py")
 run("5. figure + tables: calendar 60/40 vs diversified 30/30/40", "python3", "calendar_compare.py")
 run("5. robustness: income-path + lazy investor", "python3", "robustness.py")
 run("5. robustness: horizon (44/40-yr efficient sets)", "python3", "horizon_robust.py")
