@@ -54,7 +54,7 @@ for win, treg in SRC:
                "10th-percentile final-5yr drawdown across all 1{,}000 paths. Each strategy spans eight "
                "rows, one per metric. \\emph{Final-5yr DD} is \\emph{that path's own} terminal drawdown; "
                "\\emph{Recovery} is years to recover, or residual DD at the window end.}")
-    title = ("\\toprule \\multicolumn{6}{@{}l}{\\normalsize\\textbf{Appendix G \\textemdash\\ " +
+    title = ("\\toprule \\multicolumn{6}{@{}l}{\\normalsize\\textbf{Appendix F \\textemdash\\ " +
              f"{win}, {treg}" + "}} \\\\ \\midrule " + hdr + " \\midrule")
     out.append("{\\scriptsize\\renewcommand{\\arraystretch}{1.05}")
     out.append("\\begin{longtable}{@{}ll cccc@{}}")

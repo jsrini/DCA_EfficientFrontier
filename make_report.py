@@ -5,7 +5,7 @@
             T-bill legs (build_rate_legs) and the REIT leg (build_reit), then merge them into the
             single 8-leg file (dca_build80 merge). Needs network (Yahoo + LBMA) and reit_monthly.csv.
   2. mc     run the Monte Carlo for both tax regimes (parallel_recompute). ~40 min; the slow stage.
-  3. tables Appendix G strategy tables -> wealth_tables.tex (gen_tables2).
+  3. tables Appendix F strategy tables -> wealth_tables.tex (gen_tables2).
   4. stats  per-strategy distribution stats + paired tests -> results_record.md (compute_stats).
   5. figs   the two frontier diagrams (plot_frontier) and the calendar 60/40-vs-30/30/40 chart
             (calendar_compare); the income-path and lazy-investor robustness tables (robustness);
@@ -59,14 +59,14 @@ if SEEDCHECK:
     run("2b. seed check: seed-7 efficient set, taxable", "python3", "plot_frontier.py", "1980", "taxable", "s7")
     run("2b. seed check: seed-7 efficient set, tax-free", "python3", "plot_frontier.py", "1980", "taxfree", "s7")
 
-run("3. tables: Appendix G (wealth_tables.tex)", "python3", "gen_tables2.py")
+run("3. tables: Appendix F (wealth_tables.tex)", "python3", "gen_tables2.py")
 run("4. stats: results_record.md", "python3", "compute_stats.py")
 run("5. figure: efficient frontier, taxable", "python3", "plot_frontier.py", "1980", "taxable")
 run("5. figure: efficient frontier, tax-free", "python3", "plot_frontier.py", "1980", "taxfree")
 run("5. table: young-risk glide table", "python3", "plot_frontier.py", "1980", "glidetable")
 run("5. table: individual-stock drawdowns (Yahoo)", "python3", "build_stock_dd.py", *(("--no-fetch",) if NOFETCH else ()))
 run("5. table: terminal-pain figures for the Collins rebuttal", "python3", "collins_pain.py")
-run("5. table: wind-down-to-cash strategy (Section 8 close + Appendix H)", "python3", "winddown_strategy.py")
+run("5. table: wind-down-to-cash strategy (Section 8 close + Appendix G)", "python3", "winddown_strategy.py")
 run("5. figure + tables: calendar 60/40 vs diversified 30/30/40", "python3", "calendar_compare.py")
 run("5. robustness: income-path + lazy investor", "python3", "robustness.py")
 run("5. robustness: horizon (44/40-yr efficient sets)", "python3", "horizon_robust.py")
