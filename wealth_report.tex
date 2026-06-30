@@ -123,11 +123,11 @@ median, a 10th-percentile, and a tail.
 because one historical path can flatter a strategy that the typical outcome does not bear out.
 
 \paragraph{Are the differences real?} The large differences between strategies are not an artifact of
-the simulation. On a paired test -- comparing strategies on the \emph{same} simulated histories -- the
-major differences are distinguishable from zero. So which strategy an investor picks materially changes
-where they land. Not every pair is distinguishable: some adjacent mixes (for example 40/30/30 versus
-30/30/40 on the Sharpe ratio) test as statistically indistinguishable. But the large differences that
-drive the conclusions are real, not noise.
+the simulation. On a paired test -- comparing strategies on the \emph{same} simulated histories -- every
+pair of strategies differs significantly on wealth, on terminal drawdown, or both. So which strategy an
+investor picks materially changes where they land. A handful of pairs differ on only one axis (for
+example, GEM monthly and the Permanent Portfolio soft have indistinguishable median wealth but very
+different terminal drawdowns), but the major differences are real, not noise.
 
 \paragraph{Robustness to the random draw.} The 1{,}000 histories depend on a random seed. We re-ran the
 entire Monte Carlo under a second, independent seed. The set of efficient strategies (defined in

@@ -36,11 +36,13 @@ for win, regime, path in FILES:
 # x 3 metrics) at a 5% false-discovery rate, so the flags account for the multiple comparisons
 # rather than tagging each 95% CI in isolation (which would expect ~5% false positives).
 d = np.load(os.path.join(_R, "core_1980_taxable.npy"), allow_pickle=True).item(); data = d["data"]; names = d["names"]
-REFS = ["30/30/40 soft", "PermPort soft", "50/25/25 soft"]; METRICS = ["final", "sharpe", "calmar"]
+REFS = ["30/30/40 soft", "PermPort soft", "50/25/25 soft"]; METRICS = ["final", "termpain", "maxdd"]
 rng = np.random.default_rng(7); B = 5000; FDR = 0.05
 def series(nm, kind):
     R = data[nm]
-    return {"final": R[:,0], "sharpe": R[:,3], "calmar": calmar(R)}[kind]
+    # final wealth (col 0), terminal pain (col 8 -- final-5yr max DD), full-horizon max DD (col 2).
+    # These are the report's primary axes; Sharpe/Calmar were incidental and are dropped here.
+    return {"final": R[:,0], "termpain": R[:,8], "maxdd": R[:,2]}[kind]
 def test(a, b, kind):
     da = series(a, kind) - series(b, kind); n = len(da)
     bidx = rng.integers(0, n, size=(B, n)); bs = np.nanmean(da[bidx], 1)
@@ -79,20 +81,29 @@ for kind in METRICS:
     arr = [r[0] for k, r in res.items() if k[2] == kind]
     w(f"  - {kind}: {np.median(arr):+.4f} / {np.percentile(arr,10):+.4f} / {np.percentile(arr,90):+.4f}  (n={len(arr)})")
 
-# pass 2: render each reference's table, tagging significance from the family-wide BH threshold
+# pass 2: render each reference's table, tagging significance from the family-wide BH threshold.
+# JOINT column flags whether the pair differs on BOTH wealth AND terminal pain (the report's two
+# frontier axes). "both" = both wealth and termpain SIG; "wealth only" / "pain only" = single-axis;
+# "n.s." = indistinguishable on both. This is what the efficient-frontier argument turns on:
+# a strategy is dominated only if it's worse on BOTH axes; same-on-both means "no real difference".
 for ref in REFS:
     w(f"\n### 1980 taxable — paired bootstrap: every strategy MINUS {ref} (mean diff, 5000 resamples; SIG = BH-corrected at FDR {FDR:.0%} over the {M}-test family)")
-    w("| Strategy − ref | Final mean ($k) | Final 95%CI | F>% | Sharpe mean | Sharpe 95%CI | S>% | Calmar mean | Calmar 95%CI | C>% |")
-    w("|---|--:|--|--:|--:|--|--:|--:|--|--:|")
+    w("| Strategy − ref | Wealth mean ($k) | Wealth 95%CI | W>% | TermPain mean (pp) | TermPain 95%CI | TP>% | MaxDD mean (pp) | MaxDD 95%CI | DD>% | JOINT (wealth, pain) |")
+    w("|---|--:|--|--:|--:|--|--:|--:|--|--:|--:|")
     for nm in names:
         if nm == ref: continue
         fm,flo,fhi,fw,fp = res[(ref, nm, "final")]
-        sm,slo,shi,sw,sp = res[(ref, nm, "sharpe")]
-        cm,clo,chi,cw,cp = res[(ref, nm, "calmar")]
+        tm,tlo,thi,tw,tp = res[(ref, nm, "termpain")]
+        dm,dlo,dhi,dw,dp = res[(ref, nm, "maxdd")]
+        joint = ("both" if fp <= pcrit and tp <= pcrit
+                 else "wealth only" if fp <= pcrit
+                 else "pain only"   if tp <= pcrit
+                 else "n.s.")
         w(f"| {nm} − {ref.replace(' soft','')} | "
           f"{fm/1e3:+.0f} {sigtag(fp)} | [{flo/1e3:+.0f},{fhi/1e3:+.0f}] | {fw:.0f}% | "
-          f"{sm:+.4f} {sigtag(sp)} | [{slo:+.4f},{shi:+.4f}] | {sw:.0f}% | "
-          f"{cm:+.4f} {sigtag(cp)} | [{clo:+.4f},{chi:+.4f}] | {cw:.0f}% |")
+          f"{tm*100:+.2f} {sigtag(tp)} | [{tlo*100:+.2f},{thi*100:+.2f}] | {tw:.0f}% | "
+          f"{dm*100:+.2f} {sigtag(dp)} | [{dlo*100:+.2f},{dhi*100:+.2f}] | {dw:.0f}% | "
+          f"{joint} |")
 
 with open(OUT, "w") as _fh:                    # overwrite: the record reflects the current run only
     _fh.write("\n".join(L))
