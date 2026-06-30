@@ -60,6 +60,7 @@ if SEEDCHECK:
     run("2b. seed check: seed-7 efficient set, tax-free", "python3", "plot_frontier.py", "1980", "taxfree", "s7")
 
 run("3. tables: Appendix F (wealth_tables.tex)", "python3", "gen_tables2.py")
+run("3. macros: body-prose numbers (results/prose_macros.tex)", "python3", "gen_prose_macros.py")
 run("4. stats: results_record.md", "python3", "compute_stats.py")
 run("5. figure: efficient frontier, taxable", "python3", "plot_frontier.py", "1980", "taxable")
 run("5. figure: efficient frontier, tax-free", "python3", "plot_frontier.py", "1980", "taxfree")

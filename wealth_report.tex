@@ -36,6 +36,7 @@
 \input{results/collins_macros.tex}    % terminal-pain figures for the Collins rebuttal
 \input{results/scenario_macros.tex}   % 2022 calendar figures for the Dec-2021 flip call-out
 \input{results/winddown_macros.tex}   % wind-down-to-cash figures (Section 8 close + Appendix H)
+\input{results/prose_macros.tex}      % auto-generated numbers cited in the body prose (gen_prose_macros.py)
 
 \title{\textbf{The Efficient Frontier of Dollar Cost Averaging:\\ Balancing Expected Wealth Against Terminal Pain}}
 \author{}
@@ -184,12 +185,11 @@ income and saves 20\% of gross pay every month, dollar-cost-averaging it into on
 age-based glides, and momentum and signal strategies -- in a fully taxable account and a tax-free one,
 on the actual history and across 1{,}000 block-bootstrap simulations.
 
-Over the 46 years, the same contribution stream produced median final balances of about \textbf{\$2.0M
-to \$8.7M} depending on the strategy and account. The large differences between strategies exceed the
+Over the 46 years, the same contribution stream produced median final balances of \textbf{\$\WealthRangeLo M to \$\WealthRangeHi M} depending on the strategy and account. The large differences between strategies exceed the
 noise of the simulation, so the choice of strategy and account can change the outcome.
 
 More equity produced more wealth and deeper drawdowns together: the highest-wealth strategies (the
-equity-heavy mixes, \$6--8M) also carried the deepest terminal drawdowns ($-40\%$ to $-59\%$). No
+equity-heavy mixes, \$\EquityHeavyLo--\EquityHeavyHi M) also carried the deepest terminal drawdowns ($-\EquityHeavyPainLo\%$ to $-\EquityHeavyPainHi\%$). No
 strategy had both the most wealth and the smallest drawdown.
 
 Restricting to strategies whose terminal pain is no deeper than $-30\%$ and ranking by median wealth
@@ -289,8 +289,7 @@ managed-futures funds exist today, and an investor could add one as a further as
 \begin{enumerate}
 
 \item \textbf{Dollar-cost averaging builds wealth -- but how much depends heavily on the strategy and
-the account.} The same contribution stream over 46 years produced anywhere from about \textbf{\$2.0M
-to \$8.7M}.
+the account.} The same contribution stream over 46 years produced anywhere from \textbf{\$\WealthRangeLo M to \$\WealthRangeHi M}.
 
 \item \textbf{Taxes negatively impact wealth creation.} The tax-free account ended richer than the
 taxable one for every strategy -- roughly \textbf{15--30\% more} for the same strategy. The model taxes
@@ -303,7 +302,7 @@ the worst joint stock-and-bond years -- 2008, 2002, 2022 -- a diversified stocks
 substantially less than 60/40 (Appendix~\ref{sec:calendar}).
 
 \item \textbf{More equity meant more wealth and deeper drawdowns, together.} The highest-wealth
-strategies (80/20, aggressive; \$6--8M) also had the deepest terminal drawdowns ($-40\%$ to $-59\%$);
+strategies (80/20, aggressive; \$\EquityHeavyLo--\EquityHeavyHi M) also had the deepest terminal drawdowns ($-\EquityHeavyPainLo\%$ to $-\EquityHeavyPainHi\%$);
 the shallowest-drawdown strategies had the least wealth.
 
 \item \textbf{No strategy had both the most wealth and the smallest drawdown.} Every choice traded one
@@ -358,7 +357,7 @@ Strategy & Median wealth & Terminal pain & W/TP \\
 \bottomrule
 \end{tabular}
 \end{center}
-\noindent(The 50/25/25 mix is efficient at a looser threshold but its terminal pain of $-31\%$ falls
+\noindent(The 50/25/25 mix is efficient at a looser threshold but its terminal pain of $-\FiveTwoFivePain\%$ falls
 just outside $-30\%$.)
 
 \paragraph{Tax-free.} Four strategies are efficient within the threshold:
@@ -378,7 +377,7 @@ Strategy & Median wealth & Terminal pain & W/TP \\
 efficient. In the taxable account, \textbf{TDF 90/10$\to$30/70 (hard)}, \textbf{All Weather (no
 rebal)}, \textbf{Permanent Portfolio (hard)}, \textbf{TDF 90/10$\to$30/30/40 (hard)}, \textbf{All
 Weather (soft)}, and a \textbf{stocks/gold/bonds stepped glide} ($50/25/25 \xrightarrow{10\text{yrs}} 40/30/30 \xrightarrow{10\text{yrs}} 30/30/40$) are efficient. Within each set the
-choice is by preference: the Permanent Portfolio is the calmest (terminal pain near $-16$ to $-18\%$),
+choice is by preference: the Permanent Portfolio is the calmest (terminal pain $-\PermPortPainLo\%$ to $-\PermPortPainHi\%$),
 the richer members carry more terminal pain. Both efficient sets are unchanged under a second random
 seed.
 
@@ -390,7 +389,7 @@ field and dominates the broader middle: \textbf{All Weather (soft)}, the \textbf
 glide}, and the gold-endpoint \textbf{TDF 90/10$\to$30/30/40 (hard)} all fall behind it on both axes
 and drop off the frontier, while \textbf{60/40 (hard)} joins the set on the high-equity end. In the
 taxable account, that same TDF hard-glide pays its realized-gains tax every year and loses roughly
-40\% of its wealth, so it no longer dominates: \textbf{60/40 (hard)} now sits below the frontier, and
+\HardGlideTaxLossPct\% of its wealth, so it no longer dominates: \textbf{60/40 (hard)} now sits below the frontier, and
 the three taxable-only members earn places either by holding gold in the endpoint (no annual income
 tax, lower tax on rebalance) or by minimizing taxed turnover with a soft never-sell rule.
 
@@ -460,21 +459,21 @@ Strategy & Wealth & Term.\ pain & Wealth & Term.\ pain \\
 
 \noindent The hard stock/bond glide is the most efficient strategy in the field -- the highest wealth
 per unit of terminal pain in \emph{both} accounts (Section~\ref{sec:frontier}). It beats holding
-30/30/40 flat on both axes in both accounts: in the taxable account \$3.03M against \$3.01M with a
-shallower terminal pain ($-19\%$ against $-26\%$), and by more in the tax-free account (\$4.93M
-against \$3.73M, $-18\%$ against $-25\%$). So ``risky
+30/30/40 flat on both axes in both accounts: in the taxable account \$\HardGlideTxWealth M against \$\FlatTxWealth M with a
+shallower terminal pain ($-\HardGlideTxPain\%$ against $-\FlatTxPain\%$), and by more in the tax-free account (\$\HardGlideTfWealth M
+against \$\FlatTfWealth M, $-\HardGlideTfPain\%$ against $-\FlatTfPain\%$). So ``risky
 young, safe old,'' run as a rebalanced glide to a conservative endpoint, is supported here -- and unlike
 some framings of the question, it holds up in the taxable account too, where the rebalancing is taxed,
 not only in the shelter.
 
 Three qualifications. First, it must be the \emph{hard} (rebalanced) glide. The soft version never
 trims the early equity, so a large stock position compounds into retirement and the glide ends at
-$-33$ to $-34\%$ terminal pain -- past the $-30\%$ threshold, and deeper than holding flat -- which
+$-\SoftTDFPainLo\%$ to $-\SoftTDFPainHi\%$ terminal pain -- past the $-30\%$ threshold, and deeper than holding flat -- which
 defeats a glide's purpose. Second, the efficient endpoint here is the plain 30/70 \emph{stock/bond}
 mix: the variant that ends at 30/30/40, putting gold in the endpoint, is dominated by it -- the
 de-risking, not the gold, is what lowers terminal pain in a glide. Third, the calm ending is bought
 with a rougher youth: holding 90\% stocks early, the hard glide's 10th-percentile worst-case full
-drawdown reaches $-36.5\%$, against $-28.8\%$ for holding flat. But that loss lands when the balance is
+drawdown reaches $-\HardGlideDD\%$, against $-\FlatDD\%$ for holding flat. But that loss lands when the balance is
 smallest, so in dollars it costs little, and it is gone before the balance is large enough for a
 drawdown to remove serious money.
 
@@ -498,7 +497,7 @@ The Monte Carlo resamples the 1980--2026 record. In that record intermediate bon
 drawdown --- their worst was $-19\%$ (the 2022 rate spike), against $-55\%$ for stocks
 (Appendix~\ref{sec:calendar}). The strategies that top the efficient frontier hold a high proportion of
 bonds: \textbf{TDF 90/10$\to$30/70} ends at 70\% bonds at the point of largest balance, is efficient at
-every horizon (Appendix~\ref{sec:horizon}), and carries terminal pain of $-18$ to $-19\%$. It holds
+every horizon (Appendix~\ref{sec:horizon}), and carries terminal pain of $-\TdfHardPainLo\%$ to $-\TdfHardPainHi\%$. It holds
 mostly the one asset that did not fall hard in this record.
 
 The bond returns over this window reflect a decades-long fall in interest rates, from double digits

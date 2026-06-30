@@ -56,6 +56,7 @@ def make_winddown(e, first_frac, inflow_role, retire_year=None):
     def run(P, Y):
         sh = np.zeros(A); basis = np.zeros(A); val = np.zeros(T)
         incyr = {}; cgyr = {}; paid = set(); paidcg = set(); cgtax = 0.0
+        loss_carryforward = 0.0
         shist = np.zeros((T, A)) if e._track else None
         sold = False                                                         # has the first sale happened yet?
         for t in range(T):
@@ -63,19 +64,19 @@ def make_winddown(e, first_frac, inflow_role, retire_year=None):
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:                                    # settle last year's taxes
                 sh, basis = e._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
-                sh, basis, ct = e._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
+                sh, basis, ct, loss_carryforward = e._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t], loss_carryforward); cgtax += ct
             if t in cdset and mon[t] == 3 and yr[t] in sched:                # wind-down sale, March 15
                 f = sched[yr[t]]; sv = sh[si] * P[t][si]
                 if sv > 0 and f > 0:
-                    cgyr[yr[t]] = cgyr.get(yr[t], 0.0) + f * max(0.0, sv - basis[si])
+                    cgyr[yr[t]] = cgyr.get(yr[t], 0.0) + f * ((1 - e.tc) * sv - basis[si])    # signed -- loss-carryforward applies
                     proceeds = f * sv * (1.0 - e.tc)                          # sell-leg fee on the stock
                     sh[si] -= f * sh[si]; basis[si] -= f * basis[si]
                     buy = proceeds * (1.0 - e.tc)                             # buy-leg fee into cash
-                    sh[ci] += buy / P[t][ci]; basis[ci] += buy
+                    sh[ci] += buy / P[t][ci]; basis[ci] += proceeds
                 if yr[t] == first_year: sold = True                          # contributions switch leg after it
             if t in cdset:                                                    # contribution: stock, then inflow leg
                 dest = ii if sold else si
-                a = camt[cpos[t]]; sh[dest] += a * (1.0 - e.tc) / P[t][dest]; basis[dest] += a * (1.0 - e.tc)
+                a = camt[cpos[t]]; sh[dest] += a * (1.0 - e.tc) / P[t][dest]; basis[dest] += a
             val[t] = (sh * P[t]).sum()
         if e._track: e._shist = shist
         e.last_cgtax = cgtax; e.last_val = val
