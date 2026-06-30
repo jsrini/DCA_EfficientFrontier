@@ -62,13 +62,8 @@ def make_winddown(e, first_frac, inflow_role, retire_year=None):
             if e._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:                                    # settle last year's taxes
-                sh, _frac = e._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
-                py = yr[t] - 1
-                if py in cgyr and py not in paidcg:                          # capital-gains tax on prior sales
-                    due = e.CG * cgyr[py]; tv = (sh * P[t]).sum()
-                    if due > 0 and tv > 0:
-                        frac = min(1.0, due / ((1.0 - e.tc) * tv)); sh = sh * (1 - frac); basis = basis * (1 - frac); cgtax += min(due, tv)
-                    paidcg.add(py)
+                sh, basis = e._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = e._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
             if t in cdset and mon[t] == 3 and yr[t] in sched:                # wind-down sale, March 15
                 f = sched[yr[t]]; sv = sh[si] * P[t][si]
                 if sv > 0 and f > 0:

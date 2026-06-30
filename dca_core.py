@@ -193,26 +193,46 @@ class Engine:
         tmdd = float(dd[self.term_mask].min()) if self.term_mask.any() else float("nan")
         return np.array([fv, irr, mdd, sharpe, dur, recov, ptt, resid, tmdd])
 
-    def _pay_income(self, sh, P_t, incyr, py, paid):
-        """Sell shares pro-rata per leg to pay last year's income tax. Returns the updated share
-        vector and the per-leg fraction of shares sold, so callers that track cost basis can shrink
-        it by the same fraction (the sold shares retire their basis too)."""
-        frac = np.zeros(self.A)
+    def _pay_income(self, sh, P_t, basis, incyr, py, paid, cgyr, t_yr):
+        """Sell shares pro-rata per leg to pay last year's income tax. The forced sale realizes
+        capital gains pro-rata per leg (clipped at 0); the gain is booked into cgyr[t_yr] so it is
+        taxed next January. Returns the updated share and basis vectors."""
         if py in incyr and py not in paid:
             due = self.RATE * incyr[py]
             sell = np.minimum(sh, due / ((1.0 - self.tc) * np.where(P_t > 0, P_t, 1)))
-            frac = np.where(sh > 0, sell / np.where(sh > 0, sh, 1.0), 0.0); sh = sh - sell; paid.add(py)
-        return sh, frac
+            frac = np.where(sh > 0, sell / np.where(sh > 0, sh, 1.0), 0.0)
+            gain = float(np.maximum(0.0, frac * (sh * P_t - basis)).sum())
+            cgyr[t_yr] = cgyr.get(t_yr, 0.0) + gain
+            sh = sh - sell; basis = basis * (1.0 - frac); paid.add(py)
+        return sh, basis
+
+    def _pay_cg(self, sh, P_t, basis, cgyr, py, paidcg, t_yr):
+        """Pay last year's capital-gains tax by selling shares pro-rata across all legs. The
+        forced sale realizes additional gains (gain on the tax-funding sale itself), booked into
+        cgyr[t_yr] for next January. Returns (sh, basis, cgtax_paid)."""
+        cgtax = 0.0
+        if py in cgyr and py not in paidcg:
+            due = self.CG * cgyr[py]; tv = (sh * P_t).sum()
+            if due > 0 and tv > 0:
+                frac = min(1.0, due / ((1.0 - self.tc) * tv))
+                gain = float(np.maximum(0.0, frac * (sh * P_t - basis)).sum())
+                cgyr[t_yr] = cgyr.get(t_yr, 0.0) + gain
+                sh = sh * (1 - frac); basis = basis * (1 - frac); cgtax = min(due, tv)
+            paidcg.add(py)
+        return sh, basis, cgtax
 
     # -- strategy runners ----------------------------------------------------
     def run_static(self, P, Y, w, soft):
         A, T, cd, cdset, mon, yr, cpos, camt = self.A, self.T, self.cd, self.cdset, self.mon, self.yr, self.cpos, self.camt
-        act = w > 0; sh = np.zeros(A); val = np.zeros(T); incyr = {}; paid = set()
+        act = w > 0; sh = np.zeros(A); basis = np.zeros(A); val = np.zeros(T)
+        incyr = {}; cgyr = {}; paid = set(); paidcg = set(); cgtax = 0.0
         shist = np.zeros((T, A)) if self._track else None
         for t in range(T):
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
-            if t in cdset and mon[t] == 1: sh, _ = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+            if t in cdset and mon[t] == 1:
+                sh, basis = self._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = self._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
             if t in cdset:
                 a = camt[cpos[t]]; pv = sh * P[t]
                 if soft:
@@ -221,10 +241,10 @@ class Engine:
                     else:
                         u = act & (pv <= w * tot); ww = np.where(u, w, 0.0); ww = w.copy() if ww.sum() <= 0 else ww / ww.sum()
                 else: ww = w
-                sh = sh + a * ww * (1.0 - self.tc) / P[t]
+                sh = sh + a * ww * (1.0 - self.tc) / P[t]; basis = basis + a * ww * (1.0 - self.tc)
             val[t] = (sh * P[t]).sum()
         if self._track: self._shist = shist
-        self.last_val = val
+        self.last_cgtax = cgtax; self.last_val = val
         tvf = (sh * P[-1]).sum(); self.last_w = (sh * P[-1]) / tvf if tvf > 0 else np.zeros(self.A)
         return self.metrics(val)
 
@@ -241,13 +261,8 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
-                py = yr[t] - 1
-                if py in cgyr and py not in paidcg:
-                    due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
-                    if due > 0 and tv > 0:
-                        frac = min(1.0, due / ((1.0 - self.tc) * tv)); sh = sh * (1 - frac); basis = basis * (1 - frac); cgtax += min(due, tv)
-                    paidcg.add(py)
+                sh, basis = self._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = self._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
             if t in cdset and mon[t] == 3:                                  # annual hard rebalance, March 15
                 cv = sh * P[t]; tv = cv.sum()
                 if tv > 0:
@@ -280,13 +295,8 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
-                py = yr[t] - 1
-                if reset == "hard" and py in cgyr and py not in paidcg:
-                    due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
-                    if due > 0 and tv > 0:
-                        frac = min(1.0, due / ((1.0 - self.tc) * tv)); sh = sh * (1 - frac); basis = basis * (1 - frac); cgtax += min(due, tv)
-                    paidcg.add(py)
+                sh, basis = self._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = self._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
             if reset == "hard" and t in pidx and t != phases[0][0]:
                 w = wat(t); cv = sh * P[t]; tv = cv.sum(); tgt0 = tv * w
                 fee = self.tc * np.abs(tgt0 - cv).sum()                       # 0.1% on the sell leg + the buy leg
@@ -323,13 +333,8 @@ class Engine:
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
             if t in cdset and mon[t] == 1:
-                sh, _frac = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid); basis = basis * (1.0 - _frac)
-                py = yr[t] - 1
-                if reset == "hard" and py in cgyr and py not in paidcg:
-                    due = self.CG * cgyr[py]; tv = (sh * P[t]).sum()
-                    if due > 0 and tv > 0:
-                        frac = min(1.0, due / ((1.0 - self.tc) * tv)); sh = sh * (1 - frac); basis = basis * (1 - frac); cgtax += min(due, tv)
-                    paidcg.add(py)
+                sh, basis = self._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = self._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
                 if reset == "hard":                                            # annual rebalance to the glide target
                     w = wat(t); cv = sh * P[t]; tv = cv.sum(); tgt0 = tv * w
                     if tv > 0:
@@ -368,18 +373,24 @@ class Engine:
                 if held is not None and py in incyr and py not in paid:
                     due = (self.RATE * incyr[py]).sum(); cur = sh * P[t][held]
                     if due > 0 and cur > 0:
-                        s = min(sh, due / ((1.0 - self.tc) * P[t][held])); sh -= s
+                        s = min(sh, due / ((1.0 - self.tc) * P[t][held]))
                         if lots:
                             tot = sum(l[1] for l in lots); fr = min(1.0, s / tot) if tot > 0 else 0
+                            basis_sold = fr * sum(l[2] for l in lots)
+                            cgyr[yr[t]] = cgyr.get(yr[t], 0.0) + max(0.0, s * P[t][held] - basis_sold)
                             for l in lots: l[1] -= l[1] * fr; l[2] -= l[2] * fr
+                        sh -= s
                     paid.add(py)
-                if py in cgyr and py not in paidcg:
-                    due = self.CG * cgyr[py]; cur = sh * P[t][held] if held is not None else 0.0
+                if held is not None and py in cgyr and py not in paidcg:
+                    due = self.CG * cgyr[py]; cur = sh * P[t][held]
                     if due > 0 and cur > 0:
-                        s = min(sh, due / ((1.0 - self.tc) * P[t][held])); sh -= s
+                        s = min(sh, due / ((1.0 - self.tc) * P[t][held]))
                         if lots:
                             tot = sum(l[1] for l in lots); fr = min(1.0, s / tot) if tot > 0 else 0
+                            basis_sold = fr * sum(l[2] for l in lots)
+                            cgyr[yr[t]] = cgyr.get(yr[t], 0.0) + max(0.0, s * P[t][held] - basis_sold)
                             for l in lots: l[1] -= l[1] * fr; l[2] -= l[2] * fr
+                        sh -= s
                     paidcg.add(py)
             if mon[t] in rebal or held is None:
                 if t in cdset or held is None:
@@ -410,7 +421,8 @@ class Engine:
           MR   : 25% hard to the loser  if its 12m return < -1% (else joins the pot).
           TFMR : 12.5% hard to winner (if >+1%) + 12.5% hard to loser (if <-1%); each unfired
                  half joins the pot (it does NOT cross to the other signal).
-        Soft (never sells) -> income tax only, no capital gains.  mode in {"TF","MR","TFMR"}."""
+        Soft (never sells on signal) -> no rebalance-driven gains, but the January income-tax
+        sale still realizes (and books) capital gains.  mode in {"TF","MR","TFMR"}."""
         A, T, cdset, mon, yr, cpos, camt, prev12 = self.A, self.T, self.cdset, self.mon, self.yr, self.cpos, self.camt, self.prev12
         sgb = [self.ASSETS.index(self.col[r]) for r in ("STOCK", "GOLD", "BOND")]
         tf_amt = 0.25 if mode == "TF" else (0.125 if mode == "TFMR" else 0.0)
@@ -418,28 +430,33 @@ class Engine:
         base = np.zeros(A)
         for i in sgb: base[i] = 1.0 / 3.0          # equal-thirds soft target on stock/gold/bond
         act = base > 0
-        sh = np.zeros(A); val = np.zeros(T); incyr = {}; paid = set()
+        sh = np.zeros(A); basis = np.zeros(A); val = np.zeros(T)
+        incyr = {}; cgyr = {}; paid = set(); paidcg = set(); cgtax = 0.0
         shist = np.zeros((T, A)) if self._track else None
         for t in range(T):
             if self._track: shist[t] = sh
             incyr[yr[t]] = incyr.get(yr[t], np.zeros(A)) + Y[t] * sh * P[t]
-            if t in cdset and mon[t] == 1: sh, _ = self._pay_income(sh, P[t], incyr, yr[t] - 1, paid)
+            if t in cdset and mon[t] == 1:
+                sh, basis = self._pay_income(sh, P[t], basis, incyr, yr[t] - 1, paid, cgyr, yr[t])
+                sh, basis, ct = self._pay_cg(sh, P[t], basis, cgyr, yr[t] - 1, paidcg, yr[t]); cgtax += ct
             if t in cdset:
                 a = camt[cpos[t]]; soft = a
                 r = np.array([P[t][i] / P[prev12[t]][i] - 1 for i in sgb])   # trailing 12m total return
                 wi = int(r.argmax()); li = int(r.argmin())
                 if tf_amt > 0 and r[wi] > 0.01:                              # hard to winner
-                    sh[sgb[wi]] += tf_amt * a * (1.0 - self.tc) / P[t][sgb[wi]]; soft -= tf_amt * a
+                    q = tf_amt * a * (1.0 - self.tc) / P[t][sgb[wi]]; sh[sgb[wi]] += q
+                    basis[sgb[wi]] += tf_amt * a * (1.0 - self.tc); soft -= tf_amt * a
                 if mr_amt > 0 and r[li] < -0.01:                            # hard to loser
-                    sh[sgb[li]] += mr_amt * a * (1.0 - self.tc) / P[t][sgb[li]]; soft -= mr_amt * a
+                    q = mr_amt * a * (1.0 - self.tc) / P[t][sgb[li]]; sh[sgb[li]] += q
+                    basis[sgb[li]] += mr_amt * a * (1.0 - self.tc); soft -= mr_amt * a
                 pv = sh * P[t]; tot = pv[act].sum()                         # soft-allocate the pot on updated holdings
                 if tot <= 0: ww = base.copy()
                 else:
                     u = act & (pv <= base * tot); ww = np.where(u, base, 0.0); ww = base.copy() if ww.sum() <= 0 else ww / ww.sum()
-                sh = sh + soft * ww * (1.0 - self.tc) / P[t]
+                sh = sh + soft * ww * (1.0 - self.tc) / P[t]; basis = basis + soft * ww * (1.0 - self.tc)
             val[t] = (sh * P[t]).sum()
         if self._track: self._shist = shist
-        self.last_val = val
+        self.last_cgtax = cgtax; self.last_val = val
         tvf = (sh * P[-1]).sum(); self.last_w = (sh * P[-1]) / tvf if tvf > 0 else np.zeros(self.A)
         return self.metrics(val)
 

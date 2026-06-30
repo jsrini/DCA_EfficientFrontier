@@ -86,7 +86,9 @@ for p in ranked:
           + ("  yes" if p[0] in onf else ""))
 
 # --- rows for the report's efficient-frontier table: within-cap frontier members, sorted by W/TP ---
-_DISP = {"TDF 90>30 hard": r"TDF 90/10$\to$30/70 hard", "All Weather no-reb": "All Weather (no rebal)",
+_DISP = {"TDF 90>30 hard": r"TDF 90/10$\to$30/70 hard",
+         "TDF 90>3030 hard": r"TDF 90/10$\to$30/30/40 hard",
+         "All Weather no-reb": "All Weather (no rebal)",
          "All Weather soft": "All Weather (soft)", "glD soft": "glide D (soft)",
          "PermPort hard": "Permanent Portfolio (hard)", "60/40 hard": "60/40 (hard)"}
 _eff = sorted([p for p in front if abs(p[1]) <= LIM], key=lambda p: -ratio(p))

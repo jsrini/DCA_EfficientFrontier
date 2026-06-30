@@ -122,9 +122,8 @@ median, a 10th-percentile, and a tail.
 because one historical path can flatter a strategy that the typical outcome does not bear out.
 
 \paragraph{Are the differences real?} The large differences between strategies are not an artifact of
-the simulation. The spread in median wealth runs about \textbf{4$\times$} (roughly \$2.1M to \$8.7M),
-and on a paired test -- comparing strategies on the \emph{same} simulated histories -- the major
-differences are distinguishable from zero. So which strategy an investor picks materially changes
+the simulation. On a paired test -- comparing strategies on the \emph{same} simulated histories -- the
+major differences are distinguishable from zero. So which strategy an investor picks materially changes
 where they land. Not every pair is distinguishable: some adjacent mixes (for example 40/30/30 versus
 30/30/40 on the Sharpe ratio) test as statistically indistinguishable. But the large differences that
 drive the conclusions are real, not noise.
@@ -185,19 +184,18 @@ income and saves 20\% of gross pay every month, dollar-cost-averaging it into on
 age-based glides, and momentum and signal strategies -- in a fully taxable account and a tax-free one,
 on the actual history and across 1{,}000 block-bootstrap simulations.
 
-Over the 46 years, the same contribution stream produced median final balances of about \textbf{\$2.1M
-to \$8.7M} depending on the strategy and account -- a roughly 4$\times$ range. The large differences
-between strategies exceed the noise of the simulation, so the choice of strategy and account changes
-the outcome.
+Over the 46 years, the same contribution stream produced median final balances of about \textbf{\$2.0M
+to \$8.7M} depending on the strategy and account. The large differences between strategies exceed the
+noise of the simulation, so the choice of strategy and account can change the outcome.
 
 More equity produced more wealth and deeper drawdowns together: the highest-wealth strategies (the
 equity-heavy mixes, \$6--8M) also carried the deepest terminal drawdowns ($-40\%$ to $-59\%$). No
 strategy had both the most wealth and the smallest drawdown.
 
 Restricting to strategies whose terminal pain is no deeper than $-30\%$ and ranking by median wealth
-per unit of terminal pain, the efficient set is small -- five strategies in the taxable account, four in
+per unit of terminal pain, the efficient set is small -- six strategies in the taxable account, four in
 the tax-free account (Section~\ref{sec:frontier}). Three appear in both: the
-\textbf{90/10$\to$30/70 target-date glide (hard-rebalanced)}, \textbf{All Weather}, and the
+\textbf{90/10$\to$30/70 target-date glide (hard-rebalanced)}, \textbf{All Weather (no rebal)}, and the
 \textbf{Permanent Portfolio (hard-rebalanced)}.
 
 The account changes the ranking. Hard rebalancing realizes capital gains, which are taxed in the
@@ -291,10 +289,8 @@ managed-futures funds exist today, and an investor could add one as a further as
 \begin{enumerate}
 
 \item \textbf{Dollar-cost averaging builds wealth -- but how much depends heavily on the strategy and
-the account.} The same contribution stream over 46 years produced anywhere from about \textbf{\$2.1M
-to \$8.7M} depending on the choices -- roughly a \textbf{4$\times$} range. The report makes no claim
-about whether any of those endpoints is adequate for a retirement; it measures the gap between a poor
-set of choices and a good one, which is millions of dollars.
+the account.} The same contribution stream over 46 years produced anywhere from about \textbf{\$2.0M
+to \$8.7M}.
 
 \item \textbf{Taxes negatively impact wealth creation.} The tax-free account ended richer than the
 taxable one for every strategy -- roughly \textbf{15--30\% more} for the same strategy. The model taxes
@@ -322,7 +318,7 @@ versions ended with less wealth than soft or no-rebalancing (the forced sales re
 the tax-free account, hard-rebalanced versions were among the highest-ranked. The better rebalancing
 choice was not the same in both accounts.
 
-\item \textbf{Only a handful of strategies were efficient.} Of the 56, five in the taxable account and
+\item \textbf{Only a handful of strategies were efficient.} Of the 56, six in the taxable account and
 four in the tax-free account were on the efficient frontier within the risk threshold (Section~%
 \ref{sec:frontier}) -- not beaten by another strategy on both wealth and drawdown. The rest were
 dominated.
@@ -351,7 +347,7 @@ exceeding $30\%$ is almost certainly catastrophic. Within the threshold we rank 
 (median wealth per unit of terminal pain); the full distribution is in Appendix~\ref{sec:fullfield}, so
 a reader can apply a different ceiling. The two account types give different efficient sets.
 
-\paragraph{Taxable.} Five strategies are efficient within the $-30\%$ threshold:
+\paragraph{Taxable.} Six strategies are efficient within the $-30\%$ threshold:
 
 \begin{center}
 \begin{tabular}{@{}lrrr@{}}
@@ -377,12 +373,26 @@ Strategy & Median wealth & Terminal pain & W/TP \\
 \end{tabular}
 \end{center}
 
-\paragraph{Reading the frontier.} The two efficient sets share three names -- the
-\textbf{TDF 90/10$\to$30/70 glide (hard)}, \textbf{All Weather}, and the \textbf{Permanent Portfolio
-(hard)} -- with 60/40 (hard) joining in the tax-free account and a stocks/gold/bonds glide in the
-taxable one. Within each set the choice is by preference: the Permanent Portfolio is the calmest
-(terminal pain near $-16$ to $-18\%$), the richer members carry more terminal pain. Both efficient
-sets are unchanged under a second random seed.
+\paragraph{Strategies on the Efficient Frontier.} In the tax-free account, \textbf{TDF 90/10$\to$30/70 (hard)},
+\textbf{All Weather (no rebal)}, \textbf{Permanent Portfolio (hard)}, and \textbf{60/40 (hard)} are
+efficient. In the taxable account, \textbf{TDF 90/10$\to$30/70 (hard)}, \textbf{All Weather (no
+rebal)}, \textbf{Permanent Portfolio (hard)}, \textbf{TDF 90/10$\to$30/30/40 (hard)}, \textbf{All
+Weather (soft)}, and a \textbf{stocks/gold/bonds stepped glide} ($50/25/25 \xrightarrow{10\text{yrs}} 40/30/30 \xrightarrow{10\text{yrs}} 30/30/40$) are efficient. Within each set the
+choice is by preference: the Permanent Portfolio is the calmest (terminal pain near $-16$ to $-18\%$),
+the richer members carry more terminal pain. Both efficient sets are unchanged under a second random
+seed.
+
+\paragraph{Why the sets differ across accounts.} The account-unique members are not disqualified in
+the other account -- each remains \emph{viable} (terminal pain $\leq -30\%$) wherever it is run -- it
+is only \emph{dominated} on wealth-per-unit-pain. In the tax-free account, hard rebalancing realizes
+gains for free, so the TDF 90/10$\to$30/70 glide (hard) ends both richer and calmer than most of the
+field and dominates the broader middle: \textbf{All Weather (soft)}, the \textbf{stocks/gold/bonds
+glide}, and the gold-endpoint \textbf{TDF 90/10$\to$30/30/40 (hard)} all fall behind it on both axes
+and drop off the frontier, while \textbf{60/40 (hard)} joins the set on the high-equity end. In the
+taxable account, that same TDF hard-glide pays its realized-gains tax every year and loses roughly
+40\% of its wealth, so it no longer dominates: \textbf{60/40 (hard)} now sits below the frontier, and
+the three taxable-only members earn places either by holding gold in the endpoint (no annual income
+tax, lower tax on rebalance) or by minimizing taxed turnover with a soft never-sell rule.
 
 \paragraph{Diversification.} The risk-reducing strategies in the efficient set are diversified across
 several asset classes: All Weather holds stocks, long Treasuries, intermediate bonds, and gold; the

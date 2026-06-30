@@ -69,7 +69,7 @@ run("5. table: terminal-pain figures for the Collins rebuttal", "python3", "coll
 run("5. table: wind-down-to-cash strategy (Section 8 close + Appendix G)", "python3", "winddown_strategy.py")
 run("5. figure + tables: calendar 60/40 vs diversified 30/30/40", "python3", "calendar_compare.py")
 run("5. robustness: income-path + lazy investor", "python3", "robustness.py")
-run("5. robustness: horizon (44/40-yr efficient sets)", "python3", "horizon_robust.py")
+run("5. robustness: horizon (44/40-yr efficient sets)", "python3", "horizon_robust.py", "--fresh")
 run("6. compile pass 1", "pdflatex", "-interaction=nonstopmode", "wealth_report.tex")
 run("6. compile pass 2", "pdflatex", "-interaction=nonstopmode", "wealth_report.tex")
 
