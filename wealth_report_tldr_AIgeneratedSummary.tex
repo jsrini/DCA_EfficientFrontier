@@ -1,0 +1,109 @@
+\documentclass[9pt]{extarticle}
+\usepackage[left=0.85in, right=0.85in, top=0.55in, bottom=0.55in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=1.1em, itemsep=0pt, topsep=1pt, parsep=1pt}
+\usepackage{colortbl}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\arraystretch}{1.08}
+\setlength{\parskip}{2pt}
+\pagestyle{empty}
+
+\definecolor{brandred}{HTML}{9F1B1B}
+\definecolor{rowgray}{HTML}{F2F2F2}
+
+\titleformat*{\subsection}{\color{brandred}\bfseries}
+\titlespacing*{\subsection}{0pt}{4pt}{1pt}
+
+\input{results/prose_macros.tex}
+\input{results/winddown_macros.tex}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries The Efficient Frontier of Dollar-Cost Averaging}\\[2pt]
+{\small\itshape One-page summary. Jaggernaut Wealth Services, June 2026.}\\[1pt]
+{\color{brandred}\rule{\textwidth}{0.6pt}}
+\end{center}
+
+\subsection*{The setup}
+A hypothetical investor at the 75th percentile of full-time income saves 20\% of gross pay monthly and dollar-cost-averages it into one portfolio over 1980--2026 (46 years). 56 strategies --- static allocations, age-based \emph{glides} (designs that shift the allocation over time --- e.g., from stocks toward bonds, gold, and/or cash as retirement approaches), and momentum overlays --- plus a wind-down-to-cash strategy are each run in a fully taxable and fully tax-free account, on the actual history and on 1{,}000 block-bootstrap simulations. Strategies are ranked on the distribution of outcomes, not the single realized path.
+
+\subsection*{The two axes}
+\begin{itemize}
+\item \textbf{Median wealth} --- the middle of the 1{,}000 simulated final balances.
+\item \textbf{Terminal pain} --- the 10th-percentile drawdown in the final five years before retirement. Capped at $-30\%$: deeper late-life loss is judged unrecoverable.
+\end{itemize}
+A strategy is \textbf{efficient} if no other beats it on both wealth and pain within the $-30\%$ cap.
+
+\subsection*{Key findings}
+\begin{itemize}
+\item Median final balances ran \textbf{\$\WealthRangeLo M to \$\WealthRangeHi M} across strategies and accounts.
+\item High-wealth mixes (\$\EquityHeavyLo--\EquityHeavyHi M) carried the deepest drawdowns ($-\EquityHeavyPainLo\%$ to $-\EquityHeavyPainHi\%$). No strategy had both the most wealth and the smallest drawdown.
+\item In the worst joint stock/bond years (2008, 2002, 2022), a diversified stocks/gold/bonds mix fell far less than 60-Stk/40-Bnd.
+\item Widening the record to 1962--2026 and measuring in real 2026 dollars: bond-heavy strategies fare worse in taxable accounts on inflation-adjusted wealth. A stocks/gold/bonds glide ends with \textbf{about 24\% more real wealth} than the bond-heavy target-date glide in taxable; tax-free is a tie.
+\item Taxes lowered wealth by \textbf{15--30\%} per strategy vs.\ the tax-free account. Hard rebalancing realizes gains, so it ranks high in tax-free and lower in taxable.
+\item Efficient strategies within the $-30\%$ cap: \textbf{six in taxable, five in tax-free} (the tax-free set includes all three wind-down variants).
+\end{itemize}
+
+\subsection*{The efficient set}
+
+\begin{minipage}[t]{0.48\textwidth}
+\textbf{Taxable account}\\[2pt]
+{\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}m{4.7cm}rr@{}}
+\toprule
+\rowcolor{brandred!85}
+{\color{white}\bfseries Strategy} & {\color{white}\bfseries Median} & {\color{white}\bfseries Pain}\\
+\midrule
+TDF 90Stk/10Bnd$\to$30Stk/70Bnd (hard) & \$\HardGlideTxWealth M & $-\HardGlideTxPain\%$ \\
+\rowcolor{rowgray}
+TDF 90Stk/10Bnd$\to$30Stk/30Gld/40Bnd (hard) & \$3.04M & $-22\%$ \\
+All Weather, no rebal: 30Stk/40LongT/15Bnd/15Gld & \$3.81M & $-29\%$ \\
+\rowcolor{rowgray}
+All Weather, soft: 30Stk/40LongT/15Bnd/15Gld & \$3.32M & $-25\%$ \\
+Glide D, soft: 50/25/25 $\to$ 40/30/30 $\to$ 30/30/40 (Stk/Gld/Bnd) & \$3.46M & $-28\%$ \\
+\rowcolor{rowgray}
+Permanent Portfolio, hard: 25Stk/25Gld/25LongT/25Cash & \$2.02M & $-\PermPortPainHi\%$ \\
+\bottomrule
+\end{tabular}
+}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\textbf{Tax-free account (Roth/401k)}\\[2pt]
+{\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}m{4.7cm}rr@{}}
+\toprule
+\rowcolor{brandred!85}
+{\color{white}\bfseries Strategy} & {\color{white}\bfseries Median} & {\color{white}\bfseries Pain}\\
+\midrule
+Permanent Portfolio, hard: 25Stk/25Gld/25LongT/25Cash & \$3.00M & $-16\%$ \\
+\rowcolor{rowgray}
+TDF 90Stk/10Bnd$\to$30Stk/70Bnd (hard) & \$4.93M & $-18\%$ \\
+Wind-down to cash, sell 60\% five years out (then buy stock) & \$7.51M & $-24\%$ \\
+\rowcolor{rowgray}
+Wind-down to cash, sell 50\% five years out (then buy stock) & \$7.77M & $-25\%$ \\
+Wind-down to cash, sell 40\% five years out (then buy cash) & \$7.90M & $-27\%$ \\
+\bottomrule
+\end{tabular}
+}
+\end{minipage}
+
+\vspace{4pt}
+{\small\itshape TDF 90/10$\to$30/70 (hard) and the Permanent Portfolio (hard) appear in both sets. Sets unchanged under a second random seed.}
+
+\subsection*{What the report concludes}
+Tax-free: the wind-down-to-cash strategies have the highest wealth-per-unit-pain --- ride 100\% stocks through the accumulation, then sell to cash in the five years before retirement. All three sizing variants (sell 40\%, 50\%, or 60\% five years out) end richer than any glide and stay within the pain cap; sell-60\% has the top W/TP. Taxable: the hard-rebalanced 90/10$\to$30/70 target-date glide leads on wealth-per-pain, but a diversified stocks/gold/bonds glide (Glide D) delivers more real wealth once inflation is measured over a longer historical record. High-equity glide (target-date) requires the hard variant; the soft version overshoots the cap. The Permanent Portfolio remains the calmest efficient choice in both accounts.
+
+\vspace{2pt}
+{\footnotesize\itshape Stk = US stocks; Bnd = intermediate bonds; LongT = long Treasuries; Gld = gold; Cash = short Treasuries. ``Hard'' rebalances yearly (realizing taxable gains); ``soft'' redirects new contributions only.}
+
+\vspace{1pt}
+{\footnotesize\itshape Source: The Efficient Frontier of Dollar-Cost Averaging, Jaggernaut Wealth Services, LLC, June 2026. Backtest and thought experiment, not financial advice. Figures nominal 2026 dollars unless labeled real; AI-written code, spot-checked --- reproduce before relying.}
+
+\end{document}
