@@ -31,6 +31,17 @@ def fullDD10(d, nm):
 tx = np.load(os.path.join(RESULTS, f"tpb_{WIN}_taxable.npy"), allow_pickle=True).item()
 tf = np.load(os.path.join(RESULTS, f"tpb_{WIN}_taxfree.npy"), allow_pickle=True).item()
 
+# Appendix H (long-window bootstrap, 1962-2026 pool) -- loaded from a separate MC store written by
+# longwindow_appendix.py. If the file hasn't been generated yet (fresh clone), skip the macros.
+_lw_tx_path = os.path.join(RESULTS, "longwindow_taxable.npy")
+_lw_tf_path = os.path.join(RESULTS, "longwindow_taxfree.npy")
+if os.path.exists(_lw_tx_path) and os.path.exists(_lw_tf_path):
+    _lw_tx = np.load(_lw_tx_path, allow_pickle=True).item()["mc"]
+    _lw_tf = np.load(_lw_tf_path, allow_pickle=True).item()["mc"]
+    _lw_present = True
+else:
+    _lw_present = False
+
 # Section 6 -- hard glide (TDF 90>30 hard) vs holding flat (30/30/40 soft), both accounts
 hgTxW, hgTxP = medW(tx, "TDF 90>30 hard"), tpain(tx, "TDF 90>30 hard")
 hgTfW, hgTfP = medW(tf, "TDF 90>30 hard"), tpain(tf, "TDF 90>30 hard")
@@ -115,6 +126,20 @@ lines = [
     f"\\newcommand{{\\TdfHardPainHi}}{{{p1(abs(tdfHardPainTx))}}}",
     f"\\newcommand{{\\HardGlideTaxLossPct}}{{{i0(taxLossPct)}}}",
 ]
+
+if _lw_present:
+    def _lwmed(mc_dict, nm): return float(np.median(mc_dict[nm][:, 0])) / 1e6
+    def _lwtp(mc_dict, nm):  return float(np.percentile(mc_dict[nm][:, 8], 10)) * 100
+    lines += [
+        f"\\newcommand{{\\LongwindowTdfTxWealth}}{{{w2(_lwmed(_lw_tx, 'TDF 90/10->30/70 hard'))}}}",
+        f"\\newcommand{{\\LongwindowTdfTxPain}}{{{p1(abs(_lwtp(_lw_tx, 'TDF 90/10->30/70 hard')))}}}",
+        f"\\newcommand{{\\LongwindowTdfTfWealth}}{{{w2(_lwmed(_lw_tf, 'TDF 90/10->30/70 hard'))}}}",
+        f"\\newcommand{{\\LongwindowTdfTfPain}}{{{p1(abs(_lwtp(_lw_tf, 'TDF 90/10->30/70 hard')))}}}",
+        f"\\newcommand{{\\LongwindowGldTxWealth}}{{{w2(_lwmed(_lw_tx, 'glD hard'))}}}",
+        f"\\newcommand{{\\LongwindowGldTxPain}}{{{p1(abs(_lwtp(_lw_tx, 'glD hard')))}}}",
+        f"\\newcommand{{\\LongwindowGldTfWealth}}{{{w2(_lwmed(_lw_tf, 'glD hard'))}}}",
+        f"\\newcommand{{\\LongwindowGldTfPain}}{{{p1(abs(_lwtp(_lw_tf, 'glD hard')))}}}",
+    ]
 
 out = os.path.join(RESULTS, "prose_macros.tex")
 with open(out, "w") as f:

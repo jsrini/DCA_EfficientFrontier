@@ -299,7 +299,9 @@ nothing on gold) and realized capital gains at 25\%; a sheltered account waives 
 \item \textbf{Diversification reduced risk in the years stocks and bonds fell together.} The
 risk-reducing strategies in the efficient set hold several asset classes, not just stocks and bonds. In
 the worst joint stock-and-bond years -- 2008, 2002, 2022 -- a diversified stocks/gold/bonds mix fell
-substantially less than 60/40 (Appendix~\ref{sec:calendar}).
+substantially less than 60/40 (Appendix~\ref{sec:calendar}). We also found that the bond-heavy
+strategies may not fare well in terms of inflation-adjusted real wealth in taxable accounts, so
+diversification is useful (Appendix~\ref{sec:longwindow}).
 
 \item \textbf{More equity meant more wealth and deeper drawdowns, together.} The highest-wealth
 strategies (80/20, aggressive; \$\EquityHeavyLo--\EquityHeavyHi M) also had the deepest terminal drawdowns ($-\EquityHeavyPainLo\%$ to $-\EquityHeavyPainHi\%$);
@@ -521,6 +523,37 @@ when rebalanced (Appendix~\ref{sec:horizon}). They build less wealth than the bo
 asset that has to hold up in a crisis is split between gold and bonds --- which need not fall together
 --- rather than concentrated in bonds. Appendix~\ref{sec:horizon} lays out which mix, and soft versus
 hard rebalancing, as a wealth-versus-pain trade.
+
+\paragraph{Widening the historical record.} Appendix~\ref{sec:longwindow} runs the same 46-year
+simulation on returns from 1962--2026 instead of 1980--2026. That puts the 1970s rising-rate and
+high-inflation regime into the pool -- exactly the regime the main record lacks. To show the impact
+of inflation, results are in real 2026 dollars; taxes are paid on nominal dividends and gains
+(matching real US tax law).
+
+\medskip
+
+\noindent The two strategies compared: \textbf{TDF 90/10$\to$30/70 (hard)} -- stocks and bonds only
+-- and \textbf{glide D (hard)} -- stocks, gold, and bonds.
+
+\medskip
+
+\noindent Terminal pain stays nominal -- that's the drawdown the investor sees on their statement.
+
+\medskip
+
+\noindent Taxable: TDF ends at \$\LongwindowTdfTxWealth M real / $-\LongwindowTdfTxPain\%$ pain;
+glide D ends at \$\LongwindowGldTxWealth M real / $-\LongwindowGldTxPain\%$ pain. Tax-free: TDF
+\$\LongwindowTdfTfWealth M / $-\LongwindowTdfTfPain\%$; glide D \$\LongwindowGldTfWealth M /
+$-\LongwindowGldTfPain\%$.
+
+\medskip
+
+\noindent In the taxable account the diversified glide ends with about 24\% more real wealth than
+the bond-heavy glide, at a somewhat deeper drawdown. In the tax-free account the two tie on real
+wealth; the bond-heavy glide has the calmer drawdown. Thus, the bond-based efficient strategies
+may still be the best choice for tax-free accounts even in environments unfavorable to bonds.
+However, for taxable accounts, the simulations indicate that a diversifying asset can provide
+improvements to the wealth earned, but at the cost of potentially greater terminal pain.
 
 \section{Why Stocks Only is Dangerously Wrong}\label{sec:concentration}
 
@@ -1192,5 +1225,68 @@ column taken from that single run. The final row, 100\% US stock, is the all-sto
 down from, shown for comparison.
 
 \input{results/winddown_appendixH.tex}
+
+\section{Longer Return Universe: 1962--2026 Bootstrap}\label{sec:longwindow}
+
+The main report bootstraps 46-year contribution histories out of a 1980--2026 return pool. This
+appendix widens that pool to 1962--2026 for stocks and bonds while keeping the contribution schedule,
+seed, path count, and account regimes identical to the main report. Discussion of what the results
+do and do not tell us is in Section~\ref{sec:bonds}.
+
+\paragraph{Data.} Pre-1980 stocks are constructed from Yahoo \texttt{\^{}GSPC} daily close plus
+Robert Shiller's monthly S\&P dividend yield, compounded into a total-return index and reduced by
+VFINX's expense ratio (0.14\%/yr) to be comparable with the VFINX series that starts in 1980.
+Pre-1980 bonds are FRED's \texttt{DGS10} daily 10-yr Treasury yield turned into total return via
+price change (10-year duration approximation) plus coupon accrual, reduced by VBMFX's expense ratio
+(0.15\%/yr). Both pre-1980 series are level-spliced onto the report's 1980+ series at 1980-01-15
+so the 1980-onward portion is byte-identical. Full build is in \texttt{build\_60\_extension.py}.
+
+\paragraph{Gold, and the pre-1975 constraint.} Gold uses LBMA's PM fix from 1975-01-02 onward. The
+LBMA record starts 1968, but gold was not legally investable by US retail savers until January 1975,
+and 1968--1974 was a two-tier market and a Bretton Woods transition, not an investable asset. Gold
+data before 1975 is therefore not usable. Any bootstrap block whose calendar range spans pre-1975
+has its gold slice re-drawn from the 1975+ range: stocks and bonds in those blocks come from the
+actual 1962--1974 period; gold comes from a random 1975+ slice. Gold is thereby priced as an
+uncorrelated diversifier for those blocks -- it gets no credit for whatever inflation-hedge
+behavior would have accompanied 1962--1974 stocks and bonds.
+
+\paragraph{Bootstrap.} Same block-bootstrap policy as the main engine (block lengths 22--600 days)
+drawn from the wider pool of $\sim$16{,}443 daily return observations. Non-gold columns use the
+shared drawn index. The pre-1975 gold substitution rule applies only to the gold column.
+
+\paragraph{Inflation and reporting.} The engine runs in nominal returns and pays tax on nominal
+dividends and gains (matching real US tax law). For each simulation we also draw the corresponding
+CPI blocks and compute the path's cumulative inflation factor. Terminal wealth is deflated by that
+factor and reported in real dollars. Terminal pain stays nominal -- it's the drawdown the investor
+actually sees on their statement.
+
+\medskip
+
+\noindent Even though we believe that nominal wealth is the right measure for comparing across
+strategies (the investor sees the account balance in nominal terms), we decided to use real wealth
+for the purposes of evaluating the impact of inflation on bond-heavy portfolios.
+
+\paragraph{Strategies.} Two:
+\begin{itemize}
+\item \textbf{TDF 90/10$\to$30/70 (hard)} -- the main report's efficient-frontier top strategy.
+Stocks and bonds only.
+\item \textbf{glide D (hard)} -- stepped stocks/gold/bonds glide 50/25/25 $\to$ 40/30/30 $\to$
+30/30/40.
+\end{itemize}
+
+\paragraph{Results.} Real median wealth and nominal 10th-percentile terminal drawdown across
+1{,}000 paths.
+
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{Taxable} & \multicolumn{2}{c}{Tax-free} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Strategy & Median wealth & Terminal pain & Median wealth & Terminal pain \\
+\midrule
+\input{results/longwindow_rows.tex}\\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \end{document}
